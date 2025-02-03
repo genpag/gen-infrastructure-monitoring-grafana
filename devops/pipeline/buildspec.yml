@@ -10,29 +10,29 @@ phases:
 pre_build:
     commands:
       - echo "Iniciando a fase de pre_build..."
-  build:
-    commands:
-      - echo "Iniciando o build..."
-      - echo "Diretório de trabalho atual: $(pwd)"
-      - echo "Listando arquivos no diretório atual:"
-      - ls -la
-      - echo "Listando arquivos no diretório devops/variables:"
-      - ls -la devops/variables/
-      - echo "Verificando a versão do jq"
-      - jq --version
-      - echo "Conteúdo do arquivo parameters.json:"
-      - cat devops/variables/parameters.json
-      - echo "Validando o template CloudFormation"
-      - aws cloudformation validate-template --template-body file://grafana-stack.yaml
-      - echo "Lendo parâmetros do arquivo parameters.json"
-      - PARAMETER_OVERRIDES=$(cat devops/variables/parameters.json | jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"')
-      - echo "Parâmetros: $PARAMETER_OVERRIDES"
-      - echo "Fazendo deploy do stack CloudFormation"
-      - aws cloudformation deploy \
-          --template-file grafana-stack.yaml \
-          --stack-name grafana-stack \
-          --capabilities CAPABILITY_NAMED_IAM \
-          --parameter-overrides $PARAMETER_OVERRIDES
+build:
+  commands:
+    - echo "Iniciando o build..."
+    - echo "Diretório de trabalho atual: $(pwd)"
+    - echo "Listando arquivos no diretório atual:"
+    - ls -la
+    - echo "Listando arquivos no diretório devops/variables:"
+    - ls -la devops/variables/
+    - echo "Verificando a versão do jq"
+    - jq --version
+    - echo "Conteúdo do arquivo parameters.json:"
+    - cat devops/variables/parameters.json
+    - echo "Validando o template CloudFormation"
+    - aws cloudformation validate-template --template-body file://grafana-stack.yaml
+    - echo "Lendo parâmetros do arquivo parameters.json"
+    - PARAMETER_OVERRIDES=$(cat devops/variables/parameters.json | jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"')
+    - echo "Parâmetros: $PARAMETER_OVERRIDES"
+    - echo "Fazendo deploy do stack CloudFormation"
+    - aws cloudformation deploy \
+        --template-file grafana-stack.yaml \
+        --stack-name grafana-stack \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --parameter-overrides $PARAMETER_OVERRIDES
 artifacts:
   files:
     - grafana-stack.yaml
