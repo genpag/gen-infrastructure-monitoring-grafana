@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy do Grafana no AWS ECS com CloudFormation
+
+Parameters:
+  ClusterName:
+    Type: String
+    Description: Nome do cluster ECS existente
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: ID da VPC onde os recursos serão provisionados
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Lista de IDs das Subnets para o serviço ECS
+  GrafanaImage:
+    Type: String
+    Default: grafana/grafana:latest
+    Description: Imagem Docker do Grafana
+  Cpu:
+    Type: Number
+    Default: 512
+    Description: CPU units para a task
+  Memory:
+    Type: Number
+    Default: 1024
+    Description: Memory (em MiB) para a task
+  DesiredCount:
+    Type: Number
+    Default: 1
+    Description: Número desejado de tasks em execução
+  NamespaceTag:
+    Type: String
+    Default: Monitoring
+    Description: Valor da tag Namespace para os recursos
+
+Resources:
+  # Security Group para o Serviço ECS
+  GrafanaServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group para o serviço ECS do Grafana
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Namespace
+          Value: !Ref NamespaceTag
+
+  # Task Definition do Grafana
+  GrafanaTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: grafana-task-def
+      Cpu: !Ref Cpu
+      Memory: !Ref Memory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: grafana
+          Image: !Ref GrafanaImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3000
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: grafana
+          Environment:
+            - Name: GF_INSTALL_PLUGINS
+              Value: <plugins-que-deseja-instalar>
+      Tags:
+        - Key: Namespace
+          Value: !Ref NamespaceTag
+
+  # Serviço ECS para o Grafana
+  GrafanaService:
+    Type: AWS::ECS::Service
+    DependsOn: GrafanaTargetGroup
+    Properties:
+      Cluster: !Ref ClusterName
+      ServiceName: grafana-service
+      TaskDefinition: !Ref GrafanaTaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !GetAtt GrafanaServiceSecurityGroup.GroupId
+          Subnets: !Ref SubnetIds
+      LoadBalancers:
+        - ContainerName: grafana
+          ContainerPort: 3000
+          TargetGroupArn: !Ref GrafanaTargetGroup
+      Tags:
+        - Key: Namespace
+          Value: !Ref NamespaceTag
+
+  # Load Balancer (ALB)
+  GrafanaLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: grafana-alb
+      Scheme: internet-facing
+      Subnets: !Ref SubnetIds
+      SecurityGroups:
+        - !Ref GrafanaALBSecurityGroup
+      Type: application
+      Tags:
+        - Key: Namespace
+          Value: !Ref NamespaceTag
+
+  # Security Group do ALB
+  GrafanaALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group para o ALB do Grafana
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Namespace
+          Value: !Ref NamespaceTag
+
+  # Target Group para o Serviço ECS
+  GrafanaTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: grafana-target-group
+      Protocol: HTTP
+      Port: 3000
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: '200-399'
+      Tags:
+        - Key: Namespace
+          Value: !Ref NamespaceTag
+
+  # Listener do ALB
+  GrafanaListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref GrafanaLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref GrafanaTargetGroup
+
+  # Role IAM para a Task Execution
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: ecsTaskExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: Namespace
+          Value: !Ref NamespaceTag
+
+Outputs:
+  LoadBalancerDNSName:
+    Description: DNS do Load Balancer para acessar o Grafana
+    Value: !GetAtt GrafanaLoadBalancer.DNSName
