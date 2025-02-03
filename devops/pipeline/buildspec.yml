@@ -5,7 +5,9 @@ phases:
     runtime-versions:
       python: 3.8
     commands:
-    - apt-get update && apt-get install -y jq
+      - yum update -y
+      - yum install -y jq
+
   build:
     commands:
       - echo "Iniciando o build..."
