@@ -26,10 +26,6 @@
     {
       "ParameterKey": "DesiredCount",
       "ParameterValue": "1"
-    },
-    {
-      "ParameterKey": "NamespaceTag",
-      "ParameterValue": "Monitoring"
     }
   ]
   

@@ -22,15 +22,11 @@ Parameters:
   Memory:
     Type: Number
     Default: 1024
-    Description: Memory (em MiB) para a task
+    Description: Memória (em MiB) para a task
   DesiredCount:
     Type: Number
     Default: 1
-    Description: Número desejado de tasks em execução
-  NamespaceTag:
-    Type: String
-    Default: Monitoring
-    Description: Valor da tag Namespace para os recursos
+    Description: Número desejado de instâncias da task
 
 Resources:
   # Security Group para o Serviço ECS
@@ -44,9 +40,6 @@ Resources:
           FromPort: 3000
           ToPort: 3000
           CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Namespace
-          Value: !Ref NamespaceTag
 
   # Task Definition do Grafana
   GrafanaTaskDefinition:
@@ -75,9 +68,6 @@ Resources:
           Environment:
             - Name: GF_INSTALL_PLUGINS
               Value: <plugins-que-deseja-instalar>
-      Tags:
-        - Key: Namespace
-          Value: !Ref NamespaceTag
 
   # Serviço ECS para o Grafana
   GrafanaService:
@@ -99,9 +89,6 @@ Resources:
         - ContainerName: grafana
           ContainerPort: 3000
           TargetGroupArn: !Ref GrafanaTargetGroup
-      Tags:
-        - Key: Namespace
-          Value: !Ref NamespaceTag
 
   # Load Balancer (ALB)
   GrafanaLoadBalancer:
@@ -113,9 +100,6 @@ Resources:
       SecurityGroups:
         - !Ref GrafanaALBSecurityGroup
       Type: application
-      Tags:
-        - Key: Namespace
-          Value: !Ref NamespaceTag
 
   # Security Group do ALB
   GrafanaALBSecurityGroup:
@@ -128,9 +112,6 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Namespace
-          Value: !Ref NamespaceTag
 
   # Target Group para o Serviço ECS
   GrafanaTargetGroup:
@@ -149,9 +130,6 @@ Resources:
       UnhealthyThresholdCount: 2
       Matcher:
         HttpCode: '200-399'
-      Tags:
-        - Key: Namespace
-          Value: !Ref NamespaceTag
 
   # Listener do ALB
   GrafanaListener:
@@ -168,8 +146,7 @@ Resources:
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /
-      RoleName: ecsTaskExecutionRole
+      Path: '/'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -179,9 +156,6 @@ Resources:
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-      Tags:
-        - Key: Namespace
-          Value: !Ref NamespaceTag
 
 Outputs:
   LoadBalancerDNSName:
