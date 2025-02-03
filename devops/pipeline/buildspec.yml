@@ -12,14 +12,14 @@ phases:
     commands:
       - echo "Iniciando o build..."
       - echo "Validando o template CloudFormation"
-      - aws cloudformation validate-template --template-body file://cloudformation/grafana-stack.yaml
+      - aws cloudformation validate-template --template-body file://grafana-stack.yaml
       - echo "Fazendo deploy do stack CloudFormation"
       - aws cloudformation deploy \
-          --template-file cloudformation/grafana-stack.yaml \
+          --template-file grafana-stack.yaml \
           --stack-name grafana-stack \
           --capabilities CAPABILITY_NAMED_IAM \
-          --parameter-overrides $(cat cloudformation/parameters.json | jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"')
+          --parameter-overrides $(cat devops/variables/parameters.json | jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"')
 artifacts:
   files:
-    - cloudformation/grafana-stack.yaml
-    - cloudformation/parameters.json
+    - grafana-stack.yaml
+    - devops/variables/parameters.json
