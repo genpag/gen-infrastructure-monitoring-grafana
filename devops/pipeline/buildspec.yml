@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+  build:
+    commands:
+      - echo "Iniciando o build..."
+      - echo "Validando o template CloudFormation"
+      - aws cloudformation validate-template --template-body file://cloudformation/grafana-stack.yaml
+      - echo "Fazendo deploy do stack CloudFormation"
+      - aws cloudformation deploy \
+          --template-file cloudformation/grafana-stack.yaml \
+          --stack-name grafana-stack \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --parameter-overrides $(cat cloudformation/parameters.json | jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"')
+artifacts:
+  files:
+    - cloudformation/grafana-stack.yaml
+    - cloudformation/parameters.json
