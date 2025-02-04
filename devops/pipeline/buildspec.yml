@@ -21,8 +21,8 @@ phases:
         SECRETS=$(aws secretsmanager get-secret-value --secret-id dev/grafana/config --query SecretString --output text)
         ADMIN_USER=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_USER')
         ADMIN_PASSWORD=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_PASSWD')
-      - echo "Substituindo credenciais no grafana.ini"
-      - sed -i "s/ADMINUSER/${ADMIN_USER}/g" grafana.ini
+      - echo "Substituindo credenciais no devops/grafana-config/grafana.ini"
+      - sed -i "s/ADMINUSER/${ADMIN_USER}/g" devops/grafana-config/grafana.ini
       - sed -i "s/ADMINPASSWD/${ADMIN_PASSWORD}/g" grafana.ini
       - echo "Validando o template CloudFormation"
       - aws cloudformation validate-template --template-body file://grafana-stack.yaml
