@@ -13,20 +13,21 @@ phases:
   build:
     commands:
       - echo "Iniciando o build..."
-      - echo "Diretório de trabalho atual: $(pwd)"
+      - echo "Diretório de trabalho atual:"
+      - pwd
       - echo "Listando arquivos no diretório atual:"
       - ls -la
       - echo "Listando arquivos no diretório devops/variables:"
-      - ls -la devops/variables/
+      - if [ -d "devops/variables/" ]; then ls -la devops/variables/; else echo "Directory devops/variables/ does not exist."; fi
       - echo "Verificando a versão do jq"
       - jq --version
       - echo "Conteúdo do arquivo parameters.json:"
-      - cat devops/variables/parameters.json
+      - if [ -f devops/variables/parameters.json ]; then cat devops/variables/parameters.json; else echo "File devops/variables/parameters.json not found"; fi
       - echo "Validando o template CloudFormation"
       - aws cloudformation validate-template --template-body file://grafana-stack.yaml
       - echo "Lendo parâmetros do arquivo parameters.json"
-      - PARAMETER_OVERRIDES=$(cat devops/variables/parameters.json | jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"')
-      - echo "Parâmetros: $PARAMETER_OVERRIDES"
+      - PARAMETER_OVERRIDES=$(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' devops/variables/parameters.json)
+      - echo "Parâmetros:" $PARAMETER_OVERRIDES
       - echo "Fazendo deploy do stack CloudFormation"
       - aws cloudformation deploy \
           --template-file grafana-stack.yaml \
