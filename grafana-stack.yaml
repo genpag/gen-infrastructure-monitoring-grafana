@@ -7,10 +7,10 @@ Parameters:
     Description: Nome do cluster ECS existente
   VpcId:
     Type: AWS::EC2::VPC::Id
-    Description: ID da VPC onde os recursos serao provisionados
+    Description: ID da VPC onde os recursos serão provisionados
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
-    Description: Lista de IDs das Subnets para o servico ECS
+    Description: Lista de IDs das Subnets para o serviço ECS
   GrafanaImage:
     Type: String
     Default: grafana/grafana:latest
@@ -22,18 +22,18 @@ Parameters:
   Memory:
     Type: Number
     Default: 1024
-    Description: Memoria em MiB para a task
+    Description: Memória em MiB para a task
   DesiredCount:
     Type: Number
     Default: 1
-    Description: Numero desejado de instancias da task
+    Description: Número desejado de instâncias da task
 
 Resources:
   # Security Group para o Serviço ECS
   GrafanaServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group para o servico ECS do Grafana
+      GroupDescription: Security Group para o serviço ECS do Grafana
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -72,9 +72,9 @@ Resources:
   # Serviço ECS para o Grafana
   GrafanaService:
     Type: AWS::ECS::Service
-    DependsOn: 
-        - GrafanaTargetGroup
-        - GrafanaListener
+    DependsOn:
+      - GrafanaTargetGroup
+      - GrafanaListener
     Properties:
       Cluster: !Ref ClusterName
       ServiceName: grafana-service
@@ -119,7 +119,7 @@ Resources:
   GrafanaTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub "grafana-target-group-${AWS::StackName}"
+      Name: !Sub "tg-${AWS::StackName}"
       Protocol: HTTP
       Port: 3000
       VpcId: !Ref VpcId
@@ -133,7 +133,6 @@ Resources:
       Matcher:
         HttpCode: '200-399'
 
-
   # Listener do ALB
   GrafanaListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -144,7 +143,6 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref GrafanaTargetGroup
-
 
   # Role IAM para a Task Execution
   ECSTaskExecutionRole:
