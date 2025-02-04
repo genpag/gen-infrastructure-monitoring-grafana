@@ -7,10 +7,10 @@ Parameters:
     Description: Nome do cluster ECS existente
   VpcId:
     Type: AWS::EC2::VPC::Id
-    Description: ID da VPC onde os recursos serão provisionados
+    Description: ID da VPC onde os recursos serao provisionados
   SubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
-    Description: Lista de IDs das Subnets para o serviço ECS
+    Description: Lista de IDs das Subnets para o servico ECS
   GrafanaImage:
     Type: String
     Default: grafana/grafana:latest
@@ -22,18 +22,18 @@ Parameters:
   Memory:
     Type: Number
     Default: 1024
-    Description: Memória em MiB para a task
+    Description: Memoria em MiB para a task
   DesiredCount:
     Type: Number
     Default: 1
-    Description: Número desejado de instâncias da task
+    Description: Numero desejado de instancias da task
 
 Resources:
-  # Security Group para o Serviço ECS
+  # Security Group para o Servico ECS
   GrafanaServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group para o serviço ECS do Grafana
+      GroupDescription: Security Group para o servico ECS do Grafana
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -69,7 +69,7 @@ Resources:
             - Name: GF_INSTALL_PLUGINS
               Value: <plugins-que-deseja-instalar>
 
-  # Serviço ECS para o Grafana
+  # Servico ECS para o Grafana
   GrafanaService:
     Type: AWS::ECS::Service
     DependsOn:
@@ -115,7 +115,7 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
 
-  # Target Group para o Serviço ECS
+  # Target Group para o Servico ECS
   GrafanaTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
