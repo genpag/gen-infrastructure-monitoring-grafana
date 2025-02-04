@@ -72,9 +72,9 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: grafana
-          Environment:
-            - Name: GF_INSTALL_PLUGINS
-              Value: 'grafana-aws-cloudwatch-app'
+          # Environment:
+          #   - Name: GF_INSTALL_PLUGINS
+          #     Value: 'grafana-aws-cloudwatch-app'
 
   # Servico ECS para o Grafana
   GrafanaService:
