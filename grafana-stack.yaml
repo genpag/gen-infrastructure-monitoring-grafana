@@ -1,3 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy do Grafana e outras ferramentas no AWS ECS com CloudFormation
+
+Parameters:
+  ClusterName:
+    Type: String
+    Description: Nome do cluster ECS existente
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: ID da VPC onde os recursos serão provisionados
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Lista de IDs das Subnets para o serviço ECS
+  GrafanaImage:
+    Type: String
+    Default: grafana/grafana:latest
+    Description: Imagem Docker do Grafana
+  Cpu:
+    Type: Number
+    Default: 512
+    Description: CPU units para a task
+  Memory:
+    Type: Number
+    Default: 1024
+    Description: Memória em MiB para a task
+  DesiredCount:
+    Type: Number
+    Default: 1
+    Description: Número desejado de instâncias da task
+  TempoImage:
+    Type: String
+    Default: grafana/tempo:latest
+    Description: Imagem Docker do Tempo
+  LokiImage:
+    Type: String
+    Default: grafana/loki:latest
+    Description: Imagem Docker do Loki
+  PrometheusImage:
+    Type: String
+    Default: prom/prometheus:latest
+    Description: Imagem Docker do Prometheus
+
 Resources:
   GrafanaLogGroup:
     Type: AWS::Logs::LogGroup
@@ -8,7 +50,7 @@ Resources:
   GrafanaServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group para o servico ECS do Grafana
+      GroupDescription: Security Group para o serviço ECS do Grafana
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
