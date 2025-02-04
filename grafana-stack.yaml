@@ -29,6 +29,13 @@ Parameters:
     Description: Numero desejado de instancias da task
 
 Resources:
+  # CloudWatch Log Group para o servico ECS
+  GrafanaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/monitoring
+      RetentionInDays: 14  # Ajuste conforme necessario
+
   # Security Group para o Servico ECS
   GrafanaServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -75,6 +82,7 @@ Resources:
     DependsOn:
       - GrafanaTargetGroup
       - GrafanaListener
+      - GrafanaLogGroup  # Garante que o Log Group seja criado antes
     Properties:
       Cluster: !Ref ClusterName
       ServiceName: grafana-service
