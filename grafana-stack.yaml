@@ -72,7 +72,9 @@ Resources:
   # Serviço ECS para o Grafana
   GrafanaService:
     Type: AWS::ECS::Service
-    DependsOn: GrafanaTargetGroup
+    DependsOn: 
+        - GrafanaTargetGroup
+        - GrafanaListener
     Properties:
       Cluster: !Ref ClusterName
       ServiceName: grafana-service
@@ -94,7 +96,7 @@ Resources:
   GrafanaLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: grafana-alb
+      Name: !Sub "grafana-alb-${AWS::StackName}"
       Scheme: internet-facing
       Subnets: !Ref SubnetIds
       SecurityGroups:
@@ -117,7 +119,7 @@ Resources:
   GrafanaTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: grafana-target-group
+      Name: !Sub "grafana-target-group-${AWS::StackName}"
       Protocol: HTTP
       Port: 3000
       VpcId: !Ref VpcId
@@ -131,6 +133,7 @@ Resources:
       Matcher:
         HttpCode: '200-399'
 
+
   # Listener do ALB
   GrafanaListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -141,6 +144,7 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref GrafanaTargetGroup
+
 
   # Role IAM para a Task Execution
   ECSTaskExecutionRole:
