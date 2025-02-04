@@ -9,7 +9,7 @@
     },
     {
       "ParameterKey": "SubnetIds",
-      "ParameterValue": ["subnet-05ceaffd99868c890", "subnet-01edec609f00e787f"]
+      "ParameterValue": "subnet-05ceaffd99868c890,subnet-01edec609f00e787f"
     },
     {
       "ParameterKey": "GrafanaImage",
