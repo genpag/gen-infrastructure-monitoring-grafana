@@ -8,8 +8,8 @@ phases:
       - yum update -y
       - yum install -y jq
   pre_build:
-      commands:
-        - echo "Iniciando a fase de pre_build..."
+    commands:
+      - echo "Iniciando a fase de pre_build..."
   build:
     commands:
       - echo "Iniciando o build..."

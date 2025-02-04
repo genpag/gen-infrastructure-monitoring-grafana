@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: Deploy do Grafana no AWS ECS com CloudFormation
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy do Grafana e outras ferramentas no AWS ECS com CloudFormation
 
 Parameters:
   ClusterName:
@@ -27,16 +27,26 @@ Parameters:
     Type: Number
     Default: 1
     Description: Numero desejado de instancias da task
+  TempoImage:
+    Type: String
+    Default: grafana/tempo:latest
+    Description: Imagem Docker do Tempo
+  LokiImage:
+    Type: String
+    Default: grafana/loki:latest
+    Description: Imagem Docker do Loki
+  PrometheusImage:
+    Type: String
+    Default: prom/prometheus:latest
+    Description: Imagem Docker do Prometheus
 
 Resources:
-  # CloudWatch Log Group para o servico ECS
   GrafanaLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /ecs/monitoring
-      RetentionInDays: 14  # Ajuste conforme necessario
+      RetentionInDays: 14
 
-  # Security Group para o Servico ECS
   GrafanaServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -48,11 +58,10 @@ Resources:
           ToPort: 3000
           CidrIp: 0.0.0.0/0
 
-  # Task Definition do Grafana
   GrafanaTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: grafana-task-def
+      Family: grafana-stack
       Cpu: !Ref Cpu
       Memory: !Ref Memory
       NetworkMode: awsvpc
@@ -72,17 +81,64 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: grafana
-          # Environment:
-          #   - Name: GF_INSTALL_PLUGINS
-          #     Value: 'grafana-aws-cloudwatch-app'
+          Environment:
+            - Name: GF_INSTALL_PLUGINS
+              Value: aws-datasource-provisioner-app
+          MountPoints:
+            - SourceVolume: grafana-config
+              ContainerPath: /etc/grafana
+        - Name: tempo
+          Image: !Ref TempoImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3200
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: tempo
+          MountPoints:
+            - SourceVolume: tempo-config
+              ContainerPath: /etc/tempo
+        - Name: loki
+          Image: !Ref LokiImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3100
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: loki
+          MountPoints:
+            - SourceVolume: loki-config
+              ContainerPath: /etc/loki
+        - Name: prometheus
+          Image: !Ref PrometheusImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 9090
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: prometheus
+          MountPoints:
+            - SourceVolume: prometheus-config
+              ContainerPath: /etc/prometheus
 
-  # Servico ECS para o Grafana
   GrafanaService:
     Type: AWS::ECS::Service
     DependsOn:
       - GrafanaTargetGroup
       - GrafanaListener
-      - GrafanaLogGroup  # Garante que o Log Group seja criado antes
+      - GrafanaLogGroup
     Properties:
       Cluster: !Ref ClusterName
       ServiceName: grafana-service
@@ -100,18 +156,16 @@ Resources:
           ContainerPort: 3000
           TargetGroupArn: !Ref GrafanaTargetGroup
 
-  # Load Balancer (ALB)
   GrafanaLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub "grafana-alb-${AWS::StackName}"
+      Name: !Sub grafana-alb-${AWS::StackName}
       Scheme: internet-facing
       Subnets: !Ref SubnetIds
       SecurityGroups:
         - !Ref GrafanaALBSecurityGroup
       Type: application
 
-  # Security Group do ALB
   GrafanaALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -123,11 +177,10 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
 
-  # Target Group para o Servico ECS
   GrafanaTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub "tg-${AWS::StackName}"
+      Name: !Sub tg-${AWS::StackName}
       Protocol: HTTP
       Port: 3000
       VpcId: !Ref VpcId
@@ -139,9 +192,8 @@ Resources:
       HealthyThresholdCount: 5
       UnhealthyThresholdCount: 2
       Matcher:
-        HttpCode: '200-399'
+        HttpCode: 200-399
 
-  # Listener do ALB
   GrafanaListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -152,18 +204,17 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref GrafanaTargetGroup
 
-  # Role IAM para a Task Execution
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: '/'
+      Path: /
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
               Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 

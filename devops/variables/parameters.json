@@ -26,6 +26,18 @@
     {
       "ParameterKey": "DesiredCount",
       "ParameterValue": "1"
+    },
+    {
+      "ParameterKey": "TempoImage",
+      "ParameterValue": "grafana/tempo:latest"
+    },
+    {
+      "ParameterKey": "LokiImage",
+      "ParameterValue": "grafana/loki:latest"
+    },
+    {
+      "ParameterKey": "PrometheusImage",
+      "ParameterValue": "prom/prometheus:latest"
     }
   ]
   
