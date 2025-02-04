@@ -132,6 +132,19 @@ Resources:
           MountPoints:
             - SourceVolume: prometheus-config
               ContainerPath: /etc/prometheus
+      Volumes:
+        - Name: grafana-config
+          Host:
+            SourcePath: /mnt/efs/grafana
+        - Name: tempo-config
+          Host:
+            SourcePath: /mnt/efs/tempo
+        - Name: loki-config
+          Host:
+            SourcePath: /mnt/efs/loki
+        - Name: prometheus-config
+          Host:
+            SourcePath: /mnt/efs/prometheus
 
   GrafanaService:
     Type: AWS::ECS::Service
