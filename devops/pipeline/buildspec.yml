@@ -7,6 +7,7 @@ phases:
     commands:
       - yum update -y
       - yum install -y jq
+      - pip install awscli
   pre_build:
     commands:
       - echo "Iniciando a fase de pre_build..."
@@ -15,6 +16,14 @@ phases:
       - echo "Iniciando o build..."
       - echo "Verificando a versão do jq"
       - jq --version
+      - echo "Buscando secrets do AWS Secrets Manager"
+      - |
+        SECRETS=$(aws secretsmanager get-secret-value --secret-id dev/grafana/config --query SecretString --output text)
+        ADMIN_USER=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_USER')
+        ADMIN_PASSWORD=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_PASSWD')
+      - echo "Substituindo credenciais no grafana.ini"
+      - sed -i "s/ADMINUSER/${ADMIN_USER}/g" grafana.ini
+      - sed -i "s/ADMINPASSWD/${ADMIN_PASSWORD}/g" grafana.ini
       - echo "Validando o template CloudFormation"
       - aws cloudformation validate-template --template-body file://grafana-stack.yaml
       - echo "Lendo parâmetros do arquivo parameters.json"
@@ -30,3 +39,4 @@ artifacts:
   files:
     - grafana-stack.yaml
     - devops/variables/parameters.json
+    - grafana.ini
