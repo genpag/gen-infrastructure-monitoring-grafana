@@ -29,7 +29,8 @@ phases:
       - PARAMETER_OVERRIDES=$(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' devops/variables/parameters.json)
       - echo "Parâmetros:" $PARAMETER_OVERRIDES
       - echo "Fazendo deploy do stack CloudFormation"
-      - aws cloudformation deploy \
+      - |
+        aws cloudformation deploy \
           --template-file grafana-stack.yaml \
           --stack-name grafana-stack \
           --capabilities CAPABILITY_NAMED_IAM \
