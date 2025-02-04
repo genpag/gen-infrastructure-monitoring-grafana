@@ -84,9 +84,6 @@ Resources:
           Environment:
             - Name: GF_INSTALL_PLUGINS
               Value: aws-datasource-provisioner-app
-          MountPoints:
-            - SourceVolume: grafana-config
-              ContainerPath: /etc/grafana
         - Name: tempo
           Image: !Ref TempoImage
           Essential: true
@@ -99,9 +96,6 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: tempo
-          MountPoints:
-            - SourceVolume: tempo-config
-              ContainerPath: /etc/tempo
         - Name: loki
           Image: !Ref LokiImage
           Essential: true
@@ -114,9 +108,6 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: loki
-          MountPoints:
-            - SourceVolume: loki-config
-              ContainerPath: /etc/loki
         - Name: prometheus
           Image: !Ref PrometheusImage
           Essential: true
@@ -129,22 +120,23 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: prometheus
-          MountPoints:
-            - SourceVolume: prometheus-config
-              ContainerPath: /etc/prometheus
       Volumes:
         - Name: grafana-config
-          Host:
-            SourcePath: /mnt/efs/grafana
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EfsFileSystemId
+            RootDirectory: /grafana
         - Name: tempo-config
-          Host:
-            SourcePath: /mnt/efs/tempo
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EfsFileSystemId
+            RootDirectory: /tempo
         - Name: loki-config
-          Host:
-            SourcePath: /mnt/efs/loki
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EfsFileSystemId
+            RootDirectory: /loki
         - Name: prometheus-config
-          Host:
-            SourcePath: /mnt/efs/prometheus
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EfsFileSystemId
+            RootDirectory: /prometheus
 
   GrafanaService:
     Type: AWS::ECS::Service
