@@ -39,6 +39,9 @@ Parameters:
     Type: String
     Default: prom/prometheus:latest
     Description: Imagem Docker do Prometheus
+  EfsFileSystemId:
+    Type: String
+    Description: ID do sistema de arquivos EFS
 
 Resources:
   GrafanaLogGroup:
