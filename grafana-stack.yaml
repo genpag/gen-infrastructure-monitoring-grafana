@@ -74,7 +74,7 @@ Resources:
               awslogs-stream-prefix: grafana
           Environment:
             - Name: GF_INSTALL_PLUGINS
-              Value: <plugins-que-deseja-instalar>
+              Value: 'grafana-aws-cloudwatch-app'
 
   # Servico ECS para o Grafana
   GrafanaService:
