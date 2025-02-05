@@ -39,6 +39,12 @@ Parameters:
     Type: String
     Default: prom/prometheus:latest
     Description: Imagem Docker do Prometheus
+  DomainName:
+    Type: String
+    Description: Nome de dominio para o registro no Route 53
+  HostedZoneId:
+    Type: String
+    Description: ID da Hosted Zone do Route 53
 
 Resources:
   GrafanaLogGroup:
@@ -92,105 +98,6 @@ Resources:
           ToPort: 2049
           CidrIp: 0.0.0.0/0
 
-  GrafanaTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: grafana-stack
-      Cpu: !Ref Cpu
-      Memory: !Ref Memory
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
-      ContainerDefinitions:
-        - Name: grafana
-          Image: !Ref GrafanaImage
-          Essential: true
-          PortMappings:
-            - ContainerPort: 3000
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: grafana
-          Environment:
-            - Name: GF_INSTALL_PLUGINS
-              Value: aws-datasource-provisioner-app
-        - Name: tempo
-          Image: !Ref TempoImage
-          Essential: true
-          PortMappings:
-            - ContainerPort: 3200
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: tempo
-        - Name: loki
-          Image: !Ref LokiImage
-          Essential: true
-          PortMappings:
-            - ContainerPort: 3100
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: loki
-        - Name: prometheus
-          Image: !Ref PrometheusImage
-          Essential: true
-          PortMappings:
-            - ContainerPort: 9090
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: prometheus
-      Volumes:
-        - Name: grafana-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
-            RootDirectory: /grafana
-        - Name: tempo-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
-            RootDirectory: /tempo
-        - Name: loki-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
-            RootDirectory: /loki
-        - Name: prometheus-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
-            RootDirectory: /prometheus
-
-  GrafanaService:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref ClusterName
-      ServiceName: grafana-service
-      TaskDefinition: !Ref GrafanaTaskDefinition
-      DesiredCount: !Ref DesiredCount
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - !GetAtt GrafanaServiceSecurityGroup.GroupId
-          Subnets: !Ref SubnetIds
-      LoadBalancers:
-        - ContainerName: grafana
-          ContainerPort: 3000
-          TargetGroupArn: !Ref GrafanaTargetGroup
-
   GrafanaLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -200,6 +107,7 @@ Resources:
       SecurityGroups:
         - !Ref GrafanaALBSecurityGroup
       Type: application
+    DependsOn: GrafanaALBSecurityGroup
 
   GrafanaALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -228,6 +136,7 @@ Resources:
       UnhealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-399
+    DependsOn: GrafanaLoadBalancer
 
   GrafanaListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -238,22 +147,132 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref GrafanaTargetGroup
+    DependsOn: GrafanaTargetGroup
 
-  ECSTaskExecutionRole:
-    Type: AWS::IAM::Role
+  GrafanaTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
     Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Family: grafana-stack
+      Cpu: !Ref Cpu
+      Memory: !Ref Memory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: grafana
+          Image: !Ref GrafanaImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3000
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: grafana
+          Environment:
+            - Name: GF_INSTALL_PLUGINS
+              Value: aws-datasource-provisioner-app
+          MountPoints:
+            - SourceVolume: grafana-config
+              ContainerPath: /var/lib/grafana
+        - Name: tempo
+          Image: !Ref TempoImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3200
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: tempo
+          MountPoints:
+            - SourceVolume: tempo-config
+              ContainerPath: /var/lib/tempo
+        - Name: loki
+          Image: !Ref LokiImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3100
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: loki
+          MountPoints:
+            - SourceVolume: loki-config
+              ContainerPath: /var/lib/loki
+        - Name: prometheus
+          Image: !Ref PrometheusImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 9090
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: prometheus
+          MountPoints:
+            - SourceVolume: prometheus-config
+              ContainerPath: /var/lib/prometheus
+      Volumes:
+        - Name: grafana-config
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EFSFileSystem
+            RootDirectory: /
+        - Name: tempo-config
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EFSFileSystem
+            RootDirectory: /
+        - Name: loki-config
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EFSFileSystem
+            RootDirectory: /
+        - Name: prometheus-config
+          EfsVolumeConfiguration:
+            FileSystemId: !Ref EFSFileSystem
+            RootDirectory: /
+    DependsOn: GrafanaListener
+
+  GrafanaService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ClusterName
+      ServiceName: grafana-service
+      TaskDefinition: !Ref GrafanaTaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !GetAtt GrafanaServiceSecurityGroup.GroupId
+          Subnets: !Ref SubnetIds
+      LoadBalancers:
+        - ContainerName: grafana
+          ContainerPort: 3000
+          TargetGroupArn: !Ref GrafanaTargetGroup
+    DependsOn: GrafanaTaskDefinition
+
+GrafanaDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt GrafanaLoadBalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt GrafanaLoadBalancer.DNS
 
 Outputs:
-  LoadBalancerDNSName:
-    Description: DNS do Load Balancer para acessar o Grafana
-    Value: !GetAtt GrafanaLoadBalancer.DNSName
+  GrafanaURL:
+    Description: URL do Grafana acessível via Route 53
+    Value: !Ref DomainName

@@ -38,6 +38,13 @@
     {
       "ParameterKey": "PrometheusImage",
       "ParameterValue": "prom/prometheus:latest"
+    },
+    {
+      "ParameterKey": "DomainName",
+      "ParameterValue": "grafana-dev.gen.com.br"
+    },
+    {
+      "ParameterKey": "HostedZoneId",
+      "ParameterValue": "Z3P5QSUBK4POTI"
     }
   ]
-  
