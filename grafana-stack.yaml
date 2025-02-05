@@ -271,8 +271,3 @@ GrafanaDNSRecord:
       AliasTarget:
         HostedZoneId: !GetAtt GrafanaLoadBalancer.CanonicalHostedZoneID
         DNSName: !GetAtt GrafanaLoadBalancer.DNS
-
-Outputs:
-  GrafanaURL:
-    Description: URL do Grafana acessível via Route 53
-    Value: !Ref DomainName
