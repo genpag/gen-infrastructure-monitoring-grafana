@@ -262,7 +262,7 @@ Resources:
           TargetGroupArn: !Ref GrafanaTargetGroup
     DependsOn: GrafanaTaskDefinition
 
-GrafanaDNSRecord:
+  GrafanaDNSRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: !Ref HostedZoneId
@@ -270,4 +270,9 @@ GrafanaDNSRecord:
       Type: A
       AliasTarget:
         HostedZoneId: !GetAtt GrafanaLoadBalancer.CanonicalHostedZoneID
-        DNSName: !GetAtt GrafanaLoadBalancer.DNS
+        DNSName: !GetAtt GrafanaLoadBalancer.DNSName
+
+Outputs:
+  GrafanaURL:
+    Description: URL do Grafana acessível via Route 53
+    Value: !Ref DomainName
