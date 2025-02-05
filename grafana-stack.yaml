@@ -215,7 +215,7 @@ Resources:
   GrafanaTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub tg-${AWS::StackName}
+      Name: tg-grafana-stack
       Protocol: HTTP
       Port: 3000
       VpcId: !Ref VpcId
