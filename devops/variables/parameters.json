@@ -1,50 +1,50 @@
 [
-    {
-      "ParameterKey": "ClusterName",
-      "ParameterValue": "dev-backend-services"
-    },
-    {
-      "ParameterKey": "VpcId",
-      "ParameterValue": "vpc-09eafe1e7c7f7b9db"
-    },
-    {
-      "ParameterKey": "SubnetIds",
-      "ParameterValue": "subnet-05ceaffd99868c890,subnet-01edec609f00e787f"
-    },
-    {
-      "ParameterKey": "GrafanaImage",
-      "ParameterValue": "grafana/grafana:latest"
-    },
-    {
-      "ParameterKey": "Cpu",
-      "ParameterValue": "512"
-    },
-    {
-      "ParameterKey": "Memory",
-      "ParameterValue": "1024"
-    },
-    {
-      "ParameterKey": "DesiredCount",
-      "ParameterValue": "1"
-    },
-    {
-      "ParameterKey": "TempoImage",
-      "ParameterValue": "grafana/tempo:latest"
-    },
-    {
-      "ParameterKey": "LokiImage",
-      "ParameterValue": "grafana/loki:latest"
-    },
-    {
-      "ParameterKey": "PrometheusImage",
-      "ParameterValue": "prom/prometheus:latest"
-    },
-    {
-      "ParameterKey": "DomainName",
-      "ParameterValue": "grafana-dev.gen.com.br"
-    },
-    {
-      "ParameterKey": "HostedZoneId",
-      "ParameterValue": "Z05179831FLWSVWWTN112"
-    }
-  ]
+  {
+    "ParameterKey": "ClusterName",
+    "ParameterValue": "dev-backend-services"
+  },
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": "vpc-09eafe1e7c7f7b9db"
+  },
+  {
+    "ParameterKey": "SubnetIds",
+    "ParameterValue": "subnet-05ceaffd99868c890,subnet-01edec609f00e787f"
+  },
+  {
+    "ParameterKey": "GrafanaImage",
+    "ParameterValue": "grafana/grafana:latest"
+  },
+  {
+    "ParameterKey": "Cpu",
+    "ParameterValue": "512"
+  },
+  {
+    "ParameterKey": "Memory",
+    "ParameterValue": "1024"
+  },
+  {
+    "ParameterKey": "DesiredCount",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "TempoImage",
+    "ParameterValue": "grafana/tempo:latest"
+  },
+  {
+    "ParameterKey": "LokiImage",
+    "ParameterValue": "grafana/loki:latest"
+  },
+  {
+    "ParameterKey": "PrometheusImage",
+    "ParameterValue": "prom/prometheus:latest"
+  },
+  {
+    "ParameterKey": "DomainName",
+    "ParameterValue": "grafana-dev.gen.com.br"
+  },
+  {
+    "ParameterKey": "HostedZoneId",
+    "ParameterValue": "Z05179831FLWSVWWTN112"
+  }
+]
