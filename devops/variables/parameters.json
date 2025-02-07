@@ -41,7 +41,7 @@
   },
   {
     "ParameterKey": "DomainName",
-    "ParameterValue": "grafana-dev.gen.com.br"
+    "ParameterValue": "monitoring.dev.gen.com.br"
   },
   {
     "ParameterKey": "HostedZoneId",

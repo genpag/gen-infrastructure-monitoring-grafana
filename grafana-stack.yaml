@@ -271,7 +271,7 @@ Resources:
       Matcher:
         HttpCode: 200-399
     DependsOn: GrafanaLoadBalancer
-  
+
   GrafanaListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -289,7 +289,7 @@ Resources:
       ListenerArn: !Ref GrafanaListener
       Conditions:
         - Field: path-pattern
-          Values: ["/grafana/*"]
+          Values: ["/"]
       Actions:
         - Type: forward
           TargetGroupArn: !Ref GrafanaTargetGroup
