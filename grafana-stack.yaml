@@ -42,6 +42,9 @@ Parameters:
   HostedZoneId:
     Type: String
     Description: ID da Hosted Zone do Route 53
+  EFSFileSystem:
+    Type: String
+    Description: ID of the EFS file system
 
 Resources:
   ECSTaskExecutionRole:
