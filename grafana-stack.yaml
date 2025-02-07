@@ -422,13 +422,18 @@ Resources:
         - ContainerName: prometheus
           ContainerPort: 9090
           TargetGroupArn: !Ref PrometheusTargetGroup
-    DependsOn: GrafanaTaskDefinition
+    DependsOn: 
+      - GrafanaTaskDefinition
+      - GrafanaListener
+      - TempoListenerRule
+      - LokiListenerRule
+      - PrometheusListenerRule
 
   GrafanaDNSRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: !Ref HostedZoneId
-      Name: !Ref DomainName
+      Name: monitoring.dev.gen.com.br
       Type: A
       AliasTarget:
         HostedZoneId: !GetAtt GrafanaLoadBalancer.CanonicalHostedZoneID
@@ -437,4 +442,4 @@ Resources:
 Outputs:
   GrafanaURL:
     Description: URL do Grafana acessível via Route 53
-    Value: !Ref DomainName
+    Value: monitoring.dev.gen.com.br
