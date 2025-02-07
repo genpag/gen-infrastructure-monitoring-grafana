@@ -42,9 +42,6 @@ Parameters:
   HostedZoneId:
     Type: String
     Description: ID da Hosted Zone do Route 53
-  EfsFileSystemId:
-    Type: String
-    Description: ID of the EFS file system
 
 Resources:
   ECSTaskExecutionRole:
@@ -91,7 +88,7 @@ Resources:
       FileSystemId: !Ref GrafanaEFSFileSystem
       SubnetId: !Select [0, !Ref SubnetIds]
       SecurityGroups:
-        - !Ref GrafanaServiceSecurityGroup
+        - !Ref EFSSecurityGroup
   
   EFSMountTarget2:
     Type: AWS::EFS::MountTarget
@@ -99,7 +96,7 @@ Resources:
       FileSystemId: !Ref GrafanaEFSFileSystem
       SubnetId: !Select [1, !Ref SubnetIds]
       SecurityGroups:
-        - !Ref GrafanaServiceSecurityGroup
+        - !Ref EFSSecurityGroup
 
   EFSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
