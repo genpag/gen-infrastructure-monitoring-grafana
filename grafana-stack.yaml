@@ -42,7 +42,7 @@ Parameters:
   HostedZoneId:
     Type: String
     Description: ID da Hosted Zone do Route 53
-  EFSFileSystem:
+  EfsFileSystemId:
     Type: String
     Description: ID of the EFS file system
 
@@ -78,7 +78,7 @@ Resources:
           ToPort: 3000
           CidrIp: 0.0.0.0/0
 
-  EFSFileSystem:
+  GrafanaEFSFileSystem:
     Type: AWS::EFS::FileSystem
     Properties:
       Encrypted: true
@@ -88,18 +88,18 @@ Resources:
   EFSMountTarget1:
     Type: AWS::EFS::MountTarget
     Properties:
-      FileSystemId: !Ref EFSFileSystem
+      FileSystemId: !Ref GrafanaEFSFileSystem
       SubnetId: !Select [0, !Ref SubnetIds]
       SecurityGroups:
-        - !Ref EFSSecurityGroup
+        - !Ref GrafanaServiceSecurityGroup
   
   EFSMountTarget2:
     Type: AWS::EFS::MountTarget
     Properties:
-      FileSystemId: !Ref EFSFileSystem
+      FileSystemId: !Ref GrafanaEFSFileSystem
       SubnetId: !Select [1, !Ref SubnetIds]
       SecurityGroups:
-        - !Ref EFSSecurityGroup
+        - !Ref GrafanaServiceSecurityGroup
 
   EFSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -166,95 +166,24 @@ Resources:
   GrafanaTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: grafana-stack
-      Cpu: !Ref Cpu
-      Memory: !Ref Memory
+      Family: grafana-task
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      Cpu: !Ref Cpu
+      Memory: !Ref Memory
       ContainerDefinitions:
         - Name: grafana
           Image: !Ref GrafanaImage
           Essential: true
           PortMappings:
             - ContainerPort: 3000
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: grafana
-          Environment:
-            - Name: GF_INSTALL_PLUGINS
-              Value: aws-datasource-provisioner-app
-          MountPoints:
-            - SourceVolume: grafana-config
-              ContainerPath: /var/lib/grafana
-        - Name: tempo
-          Image: !Ref TempoImage
-          Essential: true
-          PortMappings:
-            - ContainerPort: 3200
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: tempo
-          MountPoints:
-            - SourceVolume: tempo-config
-              ContainerPath: /var/lib/tempo
-        - Name: loki
-          Image: !Ref LokiImage
-          Essential: true
-          PortMappings:
-            - ContainerPort: 3100
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: loki
-          MountPoints:
-            - SourceVolume: loki-config
-              ContainerPath: /var/lib/loki
-        - Name: prometheus
-          Image: !Ref PrometheusImage
-          Essential: true
-          PortMappings:
-            - ContainerPort: 9090
-              Protocol: tcp
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/monitoring
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: prometheus
-          MountPoints:
-            - SourceVolume: prometheus-config
-              ContainerPath: /var/lib/prometheus
       Volumes:
-        - Name: grafana-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
+        - Name: grafana-volume
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref GrafanaEFSFileSystem
             RootDirectory: /
-        - Name: tempo-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
-            RootDirectory: /
-        - Name: loki-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
-            RootDirectory: /
-        - Name: prometheus-config
-          EfsVolumeConfiguration:
-            FileSystemId: !Ref EFSFileSystem
-            RootDirectory: /
-    DependsOn: GrafanaListener
+            TransitEncryption: ENABLED
 
   GrafanaService:
     Type: AWS::ECS::Service
