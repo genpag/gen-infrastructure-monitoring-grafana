@@ -17,15 +17,12 @@ Parameters:
     Description: Imagem Docker do Grafana
   Cpu:
     Type: Number
-    Default: 512
     Description: CPU units para a task
   Memory:
     Type: Number
-    Default: 1024
     Description: Memoria em MiB para a task
   DesiredCount:
     Type: Number
-    Default: 1
     Description: Numero desejado de instancias da task
   TempoImage:
     Type: String
