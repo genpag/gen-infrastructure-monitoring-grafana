@@ -11,6 +11,36 @@ phases:
   pre_build:
     commands:
       - echo "Iniciando a fase de pre_build..."
+      - echo "Verificando se os recursos já existem..."
+      - |
+        check_efs() {
+          local efs_id=$1
+          aws efs describe-file-systems --file-system-id $efs_id >/dev/null 2>&1
+        }
+      - |
+        EFS_IDS=(
+          "GrafanaEFSFileSystem"
+          "TempoEFSFileSystem"
+          "LokiEFSFileSystem"
+          "PrometheusEFSFileSystem"
+        )
+        CONFIG_FILES=(
+          "grafana.ini"
+          "tempo.yaml"
+          "loki.yaml"
+          "prometheus.yaml"
+        )
+        for i in "${!EFS_IDS[@]}"; do
+          EFS_ID=${EFS_IDS[$i]}
+          CONFIG_FILE=${CONFIG_FILES[$i]}
+          if check_efs $EFS_ID; then
+            echo "EFS $EFS_ID já existe."
+            mkdir -p /mnt/efs/$EFS_ID
+            cp devops/configurationFiles/$CONFIG_FILE /mnt/efs/$EFS_ID/$CONFIG_FILE
+          else
+            echo "EFS $EFS_ID não existe ainda."
+          fi
+        done
   build:
     commands:
       - echo "Iniciando o build..."
@@ -22,8 +52,8 @@ phases:
         ADMIN_USER=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_USER')
         ADMIN_PASSWORD=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_PASSWD')
       - echo "Substituindo credenciais no grafana.ini"
-      - sed -i "s/ADMINUSER/${ADMIN_USER}/g" devops/grafana-config/grafana.ini
-      - sed -i "s/ADMINPASSWD/${ADMIN_PASSWORD}/g" devops/grafana-config/grafana.ini
+      - sed -i "s/ADMINUSER/${ADMIN_USER}/g" devops/configurationFiles/grafana.ini
+      - sed -i "s/ADMINPASSWD/${ADMIN_PASSWORD}/g" devops/configurationFiles/grafana.ini
       - echo "Validando o template CloudFormation"
       - aws cloudformation validate-template --template-body file://grafana-stack.yaml
       - echo "Lendo parâmetros do arquivo parameters.json"
@@ -35,8 +65,30 @@ phases:
           --stack-name grafana-stack \
           --capabilities CAPABILITY_NAMED_IAM \
           --parameter-overrides $PARAMETER_OVERRIDES
+      - echo "Exibindo mudanças feitas no stack CloudFormation"
+      - aws cloudformation describe-stack-events --stack-name grafana-stack --query 'StackEvents[?ResourceStatus==`UPDATE_COMPLETE`].{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}' --output table
+  post_build:
+    commands:
+      - echo "Iniciando a fase de post_build..."
+      - echo "Verificando se os EFS foram criados e atualizando arquivos de configuração..."
+      - |
+        for i in "${!EFS_IDS[@]}"; do
+          EFS_ID=${EFS_IDS[$i]}
+          CONFIG_FILE=${CONFIG_FILES[$i]}
+          if check_efs $EFS_ID; then
+            echo "Atualizando arquivos de configuração para $EFS_ID"
+            mkdir -p /mnt/efs/$EFS_ID
+            cp devops/configurationFiles/$CONFIG_FILE /mnt/efs/$EFS_ID/$CONFIG_FILE
+          fi
+        done
+      - echo "Reiniciando containers para aplicar novas configurações"
+      - aws ecs update-service --cluster dev-backend-services --service grafana-service --force-new-deployment
+
 artifacts:
   files:
     - grafana-stack.yaml
     - devops/variables/parameters.json
-    - devops/grafana-config/grafana.ini
+    - devops/configurationFiles/grafana.ini
+    - devops/configurationFiles/tempo.yaml
+    - devops/configurationFiles/loki.yaml
+    - devops/configurationFiles/prometheus.yaml

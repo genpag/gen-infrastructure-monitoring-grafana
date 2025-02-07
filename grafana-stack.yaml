@@ -81,7 +81,28 @@ Resources:
       Encrypted: true
       LifecyclePolicies:
         - TransitionToIA: AFTER_30_DAYS
-  
+
+  TempoEFSFileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_30_DAYS
+
+  LokiEFSFileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_30_DAYS
+
+  PrometheusEFSFileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_30_DAYS
+
   EFSMountTarget1:
     Type: AWS::EFS::MountTarget
     Properties:
@@ -89,11 +110,59 @@ Resources:
       SubnetId: !Select [0, !Ref SubnetIds]
       SecurityGroups:
         - !Ref EFSSecurityGroup
-  
+
   EFSMountTarget2:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId: !Ref GrafanaEFSFileSystem
+      SubnetId: !Select [1, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  EFSMountTarget3:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref TempoEFSFileSystem
+      SubnetId: !Select [0, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  EFSMountTarget4:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref TempoEFSFileSystem
+      SubnetId: !Select [1, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  EFSMountTarget5:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref LokiEFSFileSystem
+      SubnetId: !Select [0, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  EFSMountTarget6:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref LokiEFSFileSystem
+      SubnetId: !Select [1, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  EFSMountTarget7:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref PrometheusEFSFileSystem
+      SubnetId: !Select [0, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+
+  EFSMountTarget8:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref PrometheusEFSFileSystem
       SubnetId: !Select [1, !Ref SubnetIds]
       SecurityGroups:
         - !Ref EFSSecurityGroup
@@ -149,6 +218,60 @@ Resources:
         HttpCode: 200-399
     DependsOn: GrafanaLoadBalancer
 
+  TempoTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: tg-tempo-stack
+      Protocol: HTTP
+      Port: 3200
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-399
+    DependsOn: GrafanaLoadBalancer
+
+  LokiTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: tg-loki-stack
+      Protocol: HTTP
+      Port: 3100
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-399
+    DependsOn: GrafanaLoadBalancer
+
+  PrometheusTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: tg-prometheus-stack
+      Protocol: HTTP
+      Port: 9090
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-399
+    DependsOn: GrafanaLoadBalancer
+  
   GrafanaListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -159,6 +282,54 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref GrafanaTargetGroup
     DependsOn: GrafanaTargetGroup
+
+  GrafanaListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref GrafanaListener
+      Conditions:
+        - Field: path-pattern
+          Values: ["/grafana/*"]
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref GrafanaTargetGroup
+      Priority: 1
+
+  TempoListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref GrafanaListener
+      Conditions:
+        - Field: path-pattern
+          Values: ["/tempo/*"]
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TempoTargetGroup
+      Priority: 2
+
+  LokiListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref GrafanaListener
+      Conditions:
+        - Field: path-pattern
+          Values: ["/loki/*"]
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref LokiTargetGroup
+      Priority: 3
+
+  PrometheusListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref GrafanaListener
+      Conditions:
+        - Field: path-pattern
+          Values: ["/prometheus/*"]
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref PrometheusTargetGroup
+      Priority: 4
 
   GrafanaTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -175,10 +346,52 @@ Resources:
           Essential: true
           PortMappings:
             - ContainerPort: 3000
+          MountPoints:
+            - SourceVolume: grafana-volume
+              ContainerPath: /var/lib/grafana
+        - Name: loki
+          Image: !Ref LokiImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3100
+          MountPoints:
+            - SourceVolume: loki-volume
+              ContainerPath: /etc/loki
+        - Name: tempo
+          Image: !Ref TempoImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3200
+          MountPoints:
+            - SourceVolume: tempo-volume
+              ContainerPath: /etc/tempo
+        - Name: prometheus
+          Image: !Ref PrometheusImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 9090
+          MountPoints:
+            - SourceVolume: prometheus-volume
+              ContainerPath: /etc/prometheus
       Volumes:
         - Name: grafana-volume
           EFSVolumeConfiguration:
             FilesystemId: !Ref GrafanaEFSFileSystem
+            RootDirectory: /
+            TransitEncryption: ENABLED
+        - Name: loki-volume
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref LokiEFSFileSystem
+            RootDirectory: /
+            TransitEncryption: ENABLED
+        - Name: tempo-volume
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref TempoEFSFileSystem
+            RootDirectory: /
+            TransitEncryption: ENABLED
+        - Name: prometheus-volume
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref PrometheusEFSFileSystem
             RootDirectory: /
             TransitEncryption: ENABLED
 
@@ -200,6 +413,15 @@ Resources:
         - ContainerName: grafana
           ContainerPort: 3000
           TargetGroupArn: !Ref GrafanaTargetGroup
+        - ContainerName: loki
+          ContainerPort: 3100
+          TargetGroupArn: !Ref LokiTargetGroup
+        - ContainerName: tempo
+          ContainerPort: 3200
+          TargetGroupArn: !Ref TempoTargetGroup
+        - ContainerName: prometheus
+          ContainerPort: 9090
+          TargetGroupArn: !Ref PrometheusTargetGroup
     DependsOn: GrafanaTaskDefinition
 
   GrafanaDNSRecord:
