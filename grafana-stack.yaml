@@ -57,6 +57,7 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonElasticFileSystemClientFullAccess
 
   GrafanaLogGroup:
     Type: AWS::Logs::LogGroup
@@ -350,6 +351,7 @@ Resources:
           MountPoints:
             - SourceVolume: grafana-volume
               ContainerPath: /var/lib/grafana
+              ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -364,6 +366,7 @@ Resources:
           MountPoints:
             - SourceVolume: loki-volume
               ContainerPath: /etc/loki
+              ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -378,6 +381,10 @@ Resources:
           MountPoints:
             - SourceVolume: tempo-volume
               ContainerPath: /etc/tempo
+              ReadOnly: false
+            - SourceVolume: tempo-traces-volume
+              ContainerPath: /var/tempo/traces
+              ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -392,6 +399,7 @@ Resources:
           MountPoints:
             - SourceVolume: prometheus-volume
               ContainerPath: /etc/prometheus
+              ReadOnly: false
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -413,6 +421,11 @@ Resources:
           EFSVolumeConfiguration:
             FilesystemId: !Ref TempoEFSFileSystem
             RootDirectory: /
+            TransitEncryption: ENABLED
+        - Name: tempo-traces-volume
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref TempoEFSFileSystem
+            RootDirectory: /var/tempo/traces
             TransitEncryption: ENABLED
         - Name: prometheus-volume
           EFSVolumeConfiguration:
