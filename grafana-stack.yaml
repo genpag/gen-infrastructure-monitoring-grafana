@@ -349,6 +349,12 @@ Resources:
           MountPoints:
             - SourceVolume: grafana-volume
               ContainerPath: /var/lib/grafana
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: us-east-2
+              awslogs-stream-prefix: grafana
         - Name: loki
           Image: !Ref LokiImage
           Essential: true
@@ -357,6 +363,12 @@ Resources:
           MountPoints:
             - SourceVolume: loki-volume
               ContainerPath: /etc/loki
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: us-east-2
+              awslogs-stream-prefix: loki
         - Name: tempo
           Image: !Ref TempoImage
           Essential: true
@@ -365,6 +377,12 @@ Resources:
           MountPoints:
             - SourceVolume: tempo-volume
               ContainerPath: /etc/tempo
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: us-east-2
+              awslogs-stream-prefix: tempo
         - Name: prometheus
           Image: !Ref PrometheusImage
           Essential: true
@@ -373,6 +391,12 @@ Resources:
           MountPoints:
             - SourceVolume: prometheus-volume
               ContainerPath: /etc/prometheus
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/monitoring
+              awslogs-region: us-east-2
+              awslogs-stream-prefix: prometheus
       Volumes:
         - Name: grafana-volume
           EFSVolumeConfiguration:
