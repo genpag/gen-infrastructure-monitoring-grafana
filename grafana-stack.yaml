@@ -340,6 +340,7 @@ Resources:
         - FARGATE
       Cpu: !Ref Cpu
       Memory: !Ref Memory
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       ContainerDefinitions:
         - Name: grafana
           Image: !Ref GrafanaImage
