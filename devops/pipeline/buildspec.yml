@@ -18,27 +18,36 @@ phases:
           aws efs describe-file-systems --file-system-id $efs_id >/dev/null 2>&1
         }
       - |
+        create_efs_directories() {
+          local efs_id=$1
+          local directories=$2
+          for dir in ${directories[@]}; do
+            mkdir -p /mnt/efs/$efs_id/$dir
+          done
+        }
+      - |
         EFS_IDS=(
-          "GrafanaEFSFileSystem"
-          "TempoEFSFileSystem"
-          "LokiEFSFileSystem"
-          "PrometheusEFSFileSystem"
+          "fs-03d9f07c751d459fd"  # Replace with your actual EFS IDs
+          "fs-0a1b2c3d4e5f67890"  # Replace with your actual EFS IDs
+          "fs-1a2b3c4d5e6f78901"  # Replace with your actual EFS IDs
+          "fs-2a3b4c5d6e7f89012"  # Replace with your actual EFS IDs
         )
-        CONFIG_FILES=(
-          "grafana.ini"
-          "tempo.yaml"
-          "loki.yaml"
-          "prometheus.yaml"
+        EFS_DIRECTORIES=(
+          "/var/tempo/traces"
+          "/var/loki/index"
+          "/var/loki/cache"
+          "/var/loki/chunks"
+          "/var/lib/grafana/data"
+          "/var/lib/grafana/plugins"
+          "/var/log/grafana"
         )
-        for i in "${!EFS_IDS[@]}"; do
-          EFS_ID=${EFS_IDS[$i]}
-          CONFIG_FILE=${CONFIG_FILES[$i]}
-          if check_efs $EFS_ID; then
-            echo "EFS $EFS_ID já existe."
-            mkdir -p /mnt/efs/$EFS_ID
-            cp devops/configurationFiles/$CONFIG_FILE /mnt/efs/$EFS_ID/$CONFIG_FILE
+        for efs_id in "${EFS_IDS[@]}"; do
+          if check_efs $efs_id; then
+            echo "EFS $efs_id já existe."
+            mkdir -p /mnt/efs/$efs_id
+            create_efs_directories $efs_id "${EFS_DIRECTORIES[@]}"
           else
-            echo "EFS $EFS_ID não existe ainda."
+            echo "EFS $efs_id não existe ainda."
           fi
         done
   build:
@@ -70,17 +79,6 @@ phases:
   post_build:
     commands:
       - echo "Iniciando a fase de post_build..."
-      - echo "Verificando se os EFS foram criados e atualizando arquivos de configuração..."
-      - |
-        for i in "${!EFS_IDS[@]}"; do
-          EFS_ID=${EFS_IDS[$i]}
-          CONFIG_FILE=${CONFIG_FILES[$i]}
-          if check_efs $EFS_ID; then
-            echo "Atualizando arquivos de configuração para $EFS_ID"
-            mkdir -p /mnt/efs/$EFS_ID
-            cp devops/configurationFiles/$CONFIG_FILE /mnt/efs/$EFS_ID/$CONFIG_FILE
-          fi
-        done
       - echo "Reiniciando containers para aplicar novas configurações"
       - aws ecs update-service --cluster dev-backend-services --service grafana-service --force-new-deployment
 
