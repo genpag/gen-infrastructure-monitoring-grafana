@@ -17,24 +17,28 @@ phases:
           local efs_id=$1
           aws efs describe-file-systems --file-system-id $efs_id >/dev/null 2>&1
         }
+      - echo 'Verificando se o stack efs-stack existe...'
+      - |
+        if ! aws cloudformation describe-stacks --stack-name efs-stack >/dev/null 2>&1; then
+          echo 'Stack efs-stack não encontrado, criando stack...'
+          aws cloudformation deploy \
+            --template-file devops/configurationFiles/efs-stack.yaml \
+            --stack-name efs-stack \
+            --capabilities CAPABILITY_NAMED_IAM
+        else
+          echo 'Stack efs-stack já existe.'
+        fi
       - echo 'Buscando IDs dos sistemas de arquivos EFS do stack efs-stack...'
       - |
         GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`GrafanaEFSFileSystemId`].OutputValue' --output text)
         TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`TempoEFSFileSystemId`].OutputValue' --output text)
         LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSFileSystemId`].OutputValue' --output text)
         PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSFileSystemId`].OutputValue' --output text)
-      - |
-        if [ -z "$GRAFANA_EFS_ID" ] || [ -z "$TEMPO_EFS_ID" ] || [ -z "$LOKI_EFS_ID" ] || [ -z "$PROMETHEUS_EFS_ID" ]; then
-          echo 'EFS IDs não encontrados, criando stack efs-stack...'
-          aws cloudformation deploy \
-            --template-file devops/configurationFiles/efs-stack.yaml \
-            --stack-name efs-stack \
-            --capabilities CAPABILITY_NAMED_IAM
-          GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`GrafanaEFSFileSystemId`].OutputValue' --output text)
-          TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`TempoEFSFileSystemId`].OutputValue' --output text)
-          LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSFileSystemId`].OutputValue' --output text)
-          PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSFileSystemId`].OutputValue' --output text)
-        fi
+      - echo 'IDs dos sistemas de arquivos EFS obtidos:'
+      - echo 'Grafana EFS ID:' && echo' $GRAFANA_EFS_ID'
+      - echo 'Tempo EFS ID:' && echo' $TEMPO_EFS_ID'
+      - echo 'Loki EFS ID:' && echo' $LOKI_EFS_ID'
+      - echo 'Prometheus EFS ID:' && echo' $PROMETHEUS_EFS_ID'
       - echo 'Criando diretórios necessários nos sistemas de arquivos EFS...'
       - |
         create_efs_directories() {
