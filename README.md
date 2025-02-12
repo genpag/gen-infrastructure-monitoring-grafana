@@ -16,7 +16,7 @@ This repository contains the infrastructure code to deploy Grafana, Tempo, Loki,
 
 1. Ensure you have the necessary AWS credentials and permissions to deploy the stack.
 2. Update the `parameters.json` file with the appropriate values for your environment.
-3. Run the CI/CD pipeline to deploy the stack and update the configuration files.
+3. Run the CI/CD pipeline to deploy the `efs-stack.yaml` and `grafana-stack.yaml` and update the configuration files.
 
 ## Configuration
 

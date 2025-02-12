@@ -11,12 +11,35 @@ phases:
   pre_build:
     commands:
       - echo "Iniciando a fase de pre_build..."
-      - echo "Verificando se os recursos já existem..."
+      - echo "Verificando se os sistemas de arquivos EFS já existem..."
       - |
         check_efs() {
           local efs_id=$1
           aws efs describe-file-systems --file-system-id $efs_id >/dev/null 2>&1
         }
+      - echo "Buscando IDs dos sistemas de arquivos EFS do stack efs-stack..."
+      - |
+        GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='GrafanaEFSFileSystemId'].OutputValue" --output text)
+        TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='TempoEFSFileSystemId'].OutputValue" --output text)
+        LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='LokiEFSFileSystemId'].OutputValue" --output text)
+        PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='PrometheusEFSFileSystemId'].OutputValue" --output text)
+      - if [ -z "$GRAFANA_EFS_ID" ] || [ -z "$TEMPO_EFS_ID" ] || [ -z "$LOKI_EFS_ID" ] || [ -z "$PROMETHEUS_EFS_ID" ]; then
+          echo "EFS IDs não encontrados, criando stack efs-stack..."
+          aws cloudformation deploy \
+            --template-file devops/configurationFiles/efs-stack.yaml \
+            --stack-name efs-stack \
+            --capabilities CAPABILITY_NAMED_IAM;
+          GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='GrafanaEFSFileSystemId'].OutputValue" --output text);
+          TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='TempoEFSFileSystemId'].OutputValue" --output text);
+          LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='LokiEFSFileSystemId'].OutputValue" --output text);
+          PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='PrometheusEFSFileSystemId'].OutputValue" --output text);
+        fi
+      - echo "IDs dos sistemas de arquivos EFS obtidos:"
+      - echo "Grafana EFS ID: $GRAFANA_EFS_ID"
+      - echo "Tempo EFS ID: $TEMPO_EFS_ID"
+      - echo "Loki EFS ID: $LOKI_EFS_ID"
+      - echo "Prometheus EFS ID: $PROMETHEUS_EFS_ID"
+      - echo "Criando diretórios necessários nos sistemas de arquivos EFS..."
       - |
         create_efs_directories() {
           local efs_id=$1
@@ -31,10 +54,10 @@ phases:
         }
       - |
         EFS_IDS=(
-          "fs-03d9f07c751d459fd"  # Replace with your actual EFS IDs
-          "fs-0a1b2c3d4e5f67890"  # Replace with your actual EFS IDs
-          "fs-1a2b3c4d5e6f78901"  # Replace with your actual EFS IDs
-          "fs-2a3b4c5d6e7f89012"  # Replace with your actual EFS IDs
+          "$GRAFANA_EFS_ID"
+          "$TEMPO_EFS_ID"
+          "$LOKI_EFS_ID"
+          "$PROMETHEUS_EFS_ID"
         )
         EFS_DIRECTORIES=(
           "/var/tempo/traces"
@@ -46,11 +69,11 @@ phases:
           "/var/log/grafana"
         )
         for efs_id in "${EFS_IDS[@]}"; do
-          if check_efs $efs_id; then
-            echo "EFS $efs_id já existe."
+          if [ -n "$efs_id" ]; then
+            echo "Criando diretórios no EFS $efs_id..."
             create_efs_directories $efs_id "${EFS_DIRECTORIES[@]}"
           else
-            echo "EFS $efs_id não existe ainda."
+            echo "EFS ID não encontrado."
           fi
         done
   build:
