@@ -52,7 +52,6 @@ phases:
           done
           umount $mount_point
         }
-      - create_efs_directories_function=$(declare -f create_efs_directories)
       - |
         EFS_IDS=(
           "$GRAFANA_EFS_ID"
@@ -72,7 +71,6 @@ phases:
         for efs_id in "${EFS_IDS[@]}"; do
           if [ -n "$efs_id" ]; then
             echo "Criando diretórios no EFS $efs_id..."
-            eval "$create_efs_directories_function"
             create_efs_directories $efs_id "${EFS_DIRECTORIES[@]}"
           else
             echo "EFS ID não encontrado."
