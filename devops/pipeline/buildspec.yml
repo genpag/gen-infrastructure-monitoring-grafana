@@ -10,36 +10,37 @@ phases:
       - pip install awscli
   pre_build:
     commands:
-      - echo "Iniciando a fase de pre_build..."
-      - echo "Verificando se os sistemas de arquivos EFS já existem..."
+      - echo 'Iniciando a fase de pre_build...'
+      - echo 'Verificando se os sistemas de arquivos EFS já existem...'
       - |
         check_efs() {
           local efs_id=$1
           aws efs describe-file-systems --file-system-id $efs_id >/dev/null 2>&1
         }
-      - echo "Buscando IDs dos sistemas de arquivos EFS do stack efs-stack..."
+      - echo 'Buscando IDs dos sistemas de arquivos EFS do stack efs-stack...'
       - |
-        GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='GrafanaEFSFileSystemId'].OutputValue" --output text)
-        TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='TempoEFSFileSystemId'].OutputValue" --output text)
-        LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='LokiEFSFileSystemId'].OutputValue" --output text)
-        PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='PrometheusEFSFileSystemId'].OutputValue" --output text)
-      - if [ -z "$GRAFANA_EFS_ID" ] || [ -z "$TEMPO_EFS_ID" ] || [ -z "$LOKI_EFS_ID" ] || [ -z "$PROMETHEUS_EFS_ID" ]; then
-          echo "EFS IDs não encontrados, criando stack efs-stack..."
+        GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`GrafanaEFSFileSystemId`].OutputValue' --output text)
+        TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`TempoEFSFileSystemId`].OutputValue' --output text)
+        LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSFileSystemId`].OutputValue' --output text)
+        PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSFileSystemId`].OutputValue' --output text)
+      - |
+        if [ -z "$GRAFANA_EFS_ID" ] || [ -z "$TEMPO_EFS_ID" ] || [ -z "$LOKI_EFS_ID" ] || [ -z "$PROMETHEUS_EFS_ID" ]; then
+          echo 'EFS IDs não encontrados, criando stack efs-stack...'
           aws cloudformation deploy \
             --template-file devops/configurationFiles/efs-stack.yaml \
             --stack-name efs-stack \
-            --capabilities CAPABILITY_NAMED_IAM;
-          GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='GrafanaEFSFileSystemId'].OutputValue" --output text);
-          TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='TempoEFSFileSystemId'].OutputValue" --output text);
-          LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='LokiEFSFileSystemId'].OutputValue" --output text);
-          PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query "Stacks[0].Outputs[?OutputKey=='PrometheusEFSFileSystemId'].OutputValue" --output text);
+            --capabilities CAPABILITY_NAMED_IAM
+          GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`GrafanaEFSFileSystemId`].OutputValue' --output text)
+          TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`TempoEFSFileSystemId`].OutputValue' --output text)
+          LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSFileSystemId`].OutputValue' --output text)
+          PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSFileSystemId`].OutputValue' --output text)
         fi
-      - echo "IDs dos sistemas de arquivos EFS obtidos:"
-      - echo "Grafana EFS ID: $GRAFANA_EFS_ID"
-      - echo "Tempo EFS ID: $TEMPO_EFS_ID"
-      - echo "Loki EFS ID: $LOKI_EFS_ID"
-      - echo "Prometheus EFS ID: $PROMETHEUS_EFS_ID"
-      - echo "Criando diretórios necessários nos sistemas de arquivos EFS..."
+      - echo 'IDs dos sistemas de arquivos EFS obtidos:'
+      - echo 'Grafana EFS ID: $GRAFANA_EFS_ID'
+      - echo 'Tempo EFS ID: $TEMPO_EFS_ID'
+      - echo 'Loki EFS ID: $LOKI_EFS_ID'
+      - echo 'Prometheus EFS ID: $PROMETHEUS_EFS_ID'
+      - echo 'Criando diretórios necessários nos sistemas de arquivos EFS...'
       - |
         create_efs_directories() {
           local efs_id=$1
@@ -78,34 +79,35 @@ phases:
         done
   build:
     commands:
-      - echo "Iniciando o build..."
-      - echo "Verificando a versão do jq"
+      - echo 'Iniciando o build...'
+      - echo 'Verificando a versão do jq'
       - jq --version
-      - echo "Buscando secrets do AWS Secrets Manager"
+      - echo 'Buscando secrets do AWS Secrets Manager'
       - |
         SECRETS=$(aws secretsmanager get-secret-value --secret-id dev/grafana/config --query SecretString --output text)
         ADMIN_USER=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_USER')
         ADMIN_PASSWORD=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_PASSWD')
-      - echo "Substituindo credenciais no grafana.ini"
+      - echo 'Substituindo credenciais no grafana.ini'
       - sed -i "s/ADMINUSER/${ADMIN_USER}/g" devops/configurationFiles/grafana.ini
       - sed -i "s/ADMINPASSWD/${ADMIN_PASSWORD}/g" devops/configurationFiles/grafana.ini
-      - echo "Validando o template CloudFormation"
+      - echo 'Validando o template CloudFormation'
       - aws cloudformation validate-template --template-body file://grafana-stack.yaml
-      - echo "Lendo parâmetros do arquivo parameters.json"
-      - PARAMETER_OVERRIDES=$(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' devops/variables/parameters.json)
-      - echo "Fazendo deploy do stack CloudFormation"
+      - echo 'Lendo parâmetros do arquivo parameters.json'
+      - |
+        PARAMETER_OVERRIDES=$(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' devops/variables/parameters.json)
+      - echo 'Fazendo deploy do stack CloudFormation'
       - |
         aws cloudformation deploy \
           --template-file grafana-stack.yaml \
           --stack-name grafana-stack \
           --capabilities CAPABILITY_NAMED_IAM \
           --parameter-overrides $PARAMETER_OVERRIDES
-      - echo "Exibindo mudanças feitas no stack CloudFormation"
+      - echo 'Exibindo mudanças feitas no stack CloudFormation'
       - aws cloudformation describe-stack-events --stack-name grafana-stack --query 'StackEvents[?ResourceStatus==`UPDATE_COMPLETE`].{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}' --output table
   post_build:
     commands:
-      - echo "Iniciando a fase de post_build..."
-      - echo "Reiniciando containers para aplicar novas configurações"
+      - echo 'Iniciando a fase de post_build...'
+      - echo 'Reiniciando containers para aplicar novas configurações'
       - aws ecs update-service --cluster dev-backend-services --service grafana-service --force-new-deployment
 
 artifacts:
