@@ -375,7 +375,7 @@ Resources:
               awslogs-stream-prefix: loki
         - Name: tempo
           Image: !Ref TempoImage
-          Essential: true
+          Essential: false
           PortMappings:
             - ContainerPort: 3200
           MountPoints:
