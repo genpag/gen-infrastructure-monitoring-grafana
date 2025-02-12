@@ -34,12 +34,12 @@ phases:
         TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`TempoEFSFileSystemId`].OutputValue' --output text)
         LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSFileSystemId`].OutputValue' --output text)
         PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSFileSystemId`].OutputValue' --output text)
-      - echo 'IDs dos sistemas de arquivos EFS obtidos:'
-      - echo 'Grafana EFS ID:' && echo' $GRAFANA_EFS_ID'
-      - echo 'Tempo EFS ID:' && echo' $TEMPO_EFS_ID'
-      - echo 'Loki EFS ID:' && echo' $LOKI_EFS_ID'
-      - echo 'Prometheus EFS ID:' && echo' $PROMETHEUS_EFS_ID'
-      - echo 'Criando diretórios necessários nos sistemas de arquivos EFS...'
+      - echo "IDs dos sistemas de arquivos EFS obtidos:"
+      - echo "Grafana EFS ID:" && echo" $GRAFANA_EFS_ID"
+      - echo "Tempo EFS ID:" && echo" $TEMPO_EFS_ID"
+      - echo "Loki EFS ID:" && echo "$LOKI_EFS_ID"
+      - echo "Prometheus EFS ID:" && echo "$PROMETHEUS_EFS_ID"
+      - echo "Criando diretórios necessários nos sistemas de arquivos EFS..."
       - |
         create_efs_directories() {
           local efs_id=$1
