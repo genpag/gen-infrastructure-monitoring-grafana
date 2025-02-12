@@ -35,11 +35,6 @@ phases:
           LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSFileSystemId`].OutputValue' --output text)
           PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSFileSystemId`].OutputValue' --output text)
         fi
-      - echo 'IDs dos sistemas de arquivos EFS obtidos:'
-      - echo 'Grafana EFS ID: $GRAFANA_EFS_ID'
-      - echo 'Tempo EFS ID: $TEMPO_EFS_ID'
-      - echo 'Loki EFS ID: $LOKI_EFS_ID'
-      - echo 'Prometheus EFS ID: $PROMETHEUS_EFS_ID'
       - echo 'Criando diretórios necessários nos sistemas de arquivos EFS...'
       - |
         create_efs_directories() {
