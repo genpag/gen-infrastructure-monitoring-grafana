@@ -60,10 +60,10 @@ phases:
           local efs_id=$1
           local directories=$2
           local mount_point="/mnt/efs/$efs_id"
-          mkdir -p $mount_point
-          sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport $efs_id.efs.$AWS_REGION.amazonaws.com:/ $mount_point
+          sudo mkdir -p $mount_point
+          sudo mount -t efs -o tls $efs_id:/ $mount_point
           for dir in ${directories[@]}; do
-            mkdir -p $mount_point/$dir
+            sudo mkdir -p $mount_point/$dir
           done
           sudo umount $mount_point
         }
