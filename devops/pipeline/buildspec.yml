@@ -68,6 +68,10 @@ phases:
           sudo umount $mount_point
         }
         export AWS_REGION=us-east-2
+        if [ -z "$AWS_REGION" ]; then
+          echo "AWS_REGION is not set. Exiting..."
+          exit 1
+        fi
         for efs_id in "${EFS_IDS[@]}"; do
           if [ -n "$efs_id" ]; then
             echo "Criando diretórios no EFS $efs_id..."
