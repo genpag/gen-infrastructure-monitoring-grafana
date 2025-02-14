@@ -73,7 +73,7 @@ phases:
           exit 1
         fi
         for efs_id in "${EFS_IDS[@]}"; do
-          if [ -n "$efs_id" ]; then
+          if [ -n "$efs_id"; then
             echo "Criando diretórios no EFS $efs_id..."
             create_efs_directories $efs_id "${EFS_DIRECTORIES[@]}"
           else
