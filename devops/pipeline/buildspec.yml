@@ -41,18 +41,6 @@ phases:
       - echo "Prometheus EFS ID:" && echo $PROMETHEUS_EFS_ID
       - echo "Criando diretórios necessários nos sistemas de arquivos EFS..."
       - |
-        create_efs_directories() {
-          local efs_id=$1
-          local directories=$2
-          local mount_point="/mnt/efs/$efs_id"
-          mkdir -p $mount_point
-          mount -t nfs4 -o nfsvers=4.1 $efs_id.efs.$AWS_REGION.amazonaws.com:/ $mount_point
-          for dir in ${directories[@]}; do
-            mkdir -p $mount_point/$dir
-          done
-          umount $mount_point
-        }
-      - |
         EFS_IDS=(
           "$GRAFANA_EFS_ID"
           "$TEMPO_EFS_ID"
@@ -68,6 +56,17 @@ phases:
           "/var/lib/grafana/plugins"
           "/var/log/grafana"
         )
+        create_efs_directories() {
+          local efs_id=$1
+          local directories=$2
+          local mount_point="/mnt/efs/$efs_id"
+          mkdir -p $mount_point
+          mount -t nfs4 -o nfsvers=4.1 $efs_id.efs.$AWS_REGION.amazonaws.com:/ $mount_point
+          for dir in ${directories[@]}; do
+            mkdir -p $mount_point/$dir
+          done
+          umount $mount_point
+        }
         for efs_id in "${EFS_IDS[@]}"; do
           if [ -n "$efs_id" ]; then
             echo "Criando diretórios no EFS $efs_id..."
