@@ -61,12 +61,13 @@ phases:
           local directories=$2
           local mount_point="/mnt/efs/$efs_id"
           mkdir -p $mount_point
-          mount -t nfs4 -o nfsvers=4.1 $efs_id.efs.$AWS_REGION.amazonaws.com:/ $mount_point
+          sudo mount -t nfs4 -o nfsvers=4.1 $efs_id.efs.$AWS_REGION.amazonaws.com:/ $mount_point
           for dir in ${directories[@]}; do
             mkdir -p $mount_point/$dir
           done
-          umount $mount_point
+          sudo umount $mount_point
         }
+        export AWS_REGION=us-east-2
         for efs_id in "${EFS_IDS[@]}"; do
           if [ -n "$efs_id" ]; then
             echo "Criando diretórios no EFS $efs_id..."
