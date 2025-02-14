@@ -30,6 +30,26 @@ Resources:
       LifecyclePolicies:
         - TransitionToIA: AFTER_30_DAYS
 
+  GrafanaEFSAccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref GrafanaEFSFileSystem
+
+  TempoEFSAccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref TempoEFSFileSystem
+
+  LokiEFSAccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref LokiEFSFileSystem
+
+  PrometheusEFSAccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref PrometheusEFSFileSystem
+
 Outputs:
   GrafanaEFSFileSystemId:
     Description: ID of the Grafana EFS File System
@@ -46,3 +66,19 @@ Outputs:
   PrometheusEFSFileSystemId:
     Description: ID of the Prometheus EFS File System
     Value: !Ref PrometheusEFSFileSystem
+
+  GrafanaEFSAccessPointId:
+    Description: ID of the Grafana EFS Access Point
+    Value: !Ref GrafanaEFSAccessPoint
+
+  TempoEFSAccessPointId:
+    Description: ID of the Tempo EFS Access Point
+    Value: !Ref TempoEFSAccessPoint
+
+  LokiEFSAccessPointId:
+    Description: ID of the Loki EFS Access Point
+    Value: !Ref LokiEFSAccessPoint
+
+  PrometheusEFSAccessPointId:
+    Description: ID of the Prometheus EFS Access Point
+    Value: !Ref PrometheusEFSAccessPoint
