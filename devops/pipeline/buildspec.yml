@@ -28,25 +28,17 @@ phases:
         else
           echo 'Stack efs-stack já existe.'
         fi
-      - echo 'Buscando IDs dos sistemas de arquivos EFS e Access Points do stack efs-stack...'
+      - echo 'Buscando IDs dos sistemas de arquivos EFS do stack efs-stack...'
       - |
         GRAFANA_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`GrafanaEFSFileSystemId`].OutputValue' --output text)
         TEMPO_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`TempoEFSFileSystemId`].OutputValue' --output text)
         LOKI_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSFileSystemId`].OutputValue' --output text)
         PROMETHEUS_EFS_ID=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSFileSystemId`].OutputValue' --output text)
-        GRAFANA_EFS_AP=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`GrafanaEFSAccessPointId`].OutputValue' --output text)
-        TEMPO_EFS_AP=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`TempoEFSAccessPointId`].OutputValue' --output text)
-        LOKI_EFS_AP=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`LokiEFSAccessPointId`].OutputValue' --output text)
-        PROMETHEUS_EFS_AP=$(aws cloudformation describe-stacks --stack-name efs-stack --query 'Stacks[0].Outputs[?OutputKey==`PrometheusEFSAccessPointId`].OutputValue' --output text)
-      - echo "IDs dos sistemas de arquivos EFS e Access Points obtidos:"
+      - echo "IDs dos sistemas de arquivos EFS obtidos:"
       - echo "Grafana EFS ID:" && echo $GRAFANA_EFS_ID
       - echo "Tempo EFS ID:" && echo $TEMPO_EFS_ID
       - echo "Loki EFS ID:" && echo $LOKI_EFS_ID
       - echo "Prometheus EFS ID:" && echo $PROMETHEUS_EFS_ID
-      - echo "Grafana EFS Access Point:" && echo $GRAFANA_EFS_AP
-      - echo "Tempo EFS Access Point:" && echo $TEMPO_EFS_AP
-      - echo "Loki EFS Access Point:" && echo $LOKI_EFS_AP
-      - echo "Prometheus EFS Access Point:" && echo $PROMETHEUS_EFS_AP
       - echo "Criando diretórios necessários nos sistemas de arquivos EFS..."
       - |
         EFS_IDS=(
@@ -54,12 +46,6 @@ phases:
           "$TEMPO_EFS_ID"
           "$LOKI_EFS_ID"
           "$PROMETHEUS_EFS_ID"
-        )
-        EFS_APS=(
-          "$GRAFANA_EFS_AP"
-          "$TEMPO_EFS_AP"
-          "$LOKI_EFS_AP"
-          "$PROMETHEUS_EFS_AP"
         )
         EFS_DIRECTORIES=(
           "/var/tempo/traces"
@@ -72,11 +58,10 @@ phases:
         )
         create_efs_directories() {
           local efs_id=$1
-          local efs_ap=$2
-          local directories=$3
+          local directories=$2
           local mount_point="/mnt/efs/$efs_id"
           mkdir -p $mount_point
-          sudo mount -t nfs4 -o nfsvers=4.1 $efs_id.efs.$AWS_REGION.amazonaws.com:/ $mount_point -o accesspoint=$efs_ap
+          sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport $efs_id.efs.$AWS_REGION.amazonaws.com:/ $mount_point
           for dir in ${directories[@]}; do
             mkdir -p $mount_point/$dir
           done
@@ -87,14 +72,12 @@ phases:
           echo "AWS_REGION is not set. Exiting..."
           exit 1
         fi
-        for i in "${!EFS_IDS[@]}"; do
-          efs_id=${EFS_IDS[$i]}
-          efs_ap=${EFS_APS[$i]}
-          if [ -n "$efs_id" ] && [ -n "$efs_ap" ]; then
-            echo "Criando diretórios no EFS $efs_id com Access Point $efs_ap..."
-            create_efs_directories $efs_id $efs_ap "${EFS_DIRECTORIES[@]}"
+        for efs_id in "${EFS_IDS[@]}"; do
+          if [ -n "$efs_id" ]; then
+            echo "Criando diretórios no EFS $efs_id..."
+            create_efs_directories $efs_id "${EFS_DIRECTORIES[@]}"
           else
-            echo "EFS ID ou Access Point não encontrado."
+            echo "EFS ID não encontrado."
           fi
         done
   build:
