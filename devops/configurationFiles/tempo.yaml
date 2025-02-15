@@ -8,11 +8,11 @@ distributor:
         grpc:
         thrift_binary:
         thrift_compact:
-        thrift_http:
+        thrift_http
     otlp:
       protocols:
         grpc:
-        http:
+        http
     zipkin:
       endpoint: 0.0.0.0:9411
 
@@ -31,4 +31,4 @@ storage:
   trace:
     backend: local
     local:
-      path: /var/tempo/traces
+      path: /etc/tempo/traces
