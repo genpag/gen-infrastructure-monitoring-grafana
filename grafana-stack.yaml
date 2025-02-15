@@ -250,7 +250,11 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: grafana
-          Command: ["/bin/sh", "-c", "cp /etc/grafana-config/* /etc/grafana/ && /run.sh"]
+          Environment:
+            - Name: GRAFANA_INI
+              Value: !Sub |
+                ${!file devops/configurationFiles/grafana.ini}
+          Command: ["/bin/sh", "-c", "echo \"$GRAFANA_INI\" > /etc/grafana/grafana.ini && /run.sh"]
         - Name: loki
           Image: !Ref LokiImage
           Essential: true
@@ -262,10 +266,14 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: loki
-          Command: ["/bin/sh", "-c", "cp /etc/loki-config/* /etc/loki/ && /run.sh"]
+          Environment:
+            - Name: LOKI_YAML
+              Value: !Sub |
+                ${!file devops/configurationFiles/loki.yaml}
+          Command: ["/bin/sh", "-c", "echo \"$LOKI_YAML\" > /etc/loki/loki.yaml && /run.sh"]
         - Name: tempo
           Image: !Ref TempoImage
-          Essential: true
+          Essential: false
           PortMappings:
             - ContainerPort: 3200
           LogConfiguration:
@@ -274,7 +282,11 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: tempo
-          Command: ["/bin/sh", "-c", "cp /etc/tempo-config/* /etc/tempo/ && /run.sh"]
+          Environment:
+            - Name: TEMPO_YAML
+              Value: !Sub |
+                ${!file devops/configurationFiles/tempo.yaml}
+          Command: ["/bin/sh", "-c", "echo \"$TEMPO_YAML\" > /etc/tempo/tempo.yaml && /run.sh"]
         - Name: prometheus
           Image: !Ref PrometheusImage
           Essential: true
@@ -286,20 +298,11 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: prometheus
-          Command: ["/bin/sh", "-c", "cp /etc/prometheus-config/* /etc/prometheus/ && /run.sh"]
-      Volumes:
-        - Name: grafana-config
-          Host:
-            SourcePath: /etc/grafana
-        - Name: loki-config
-          Host:
-            SourcePath: /etc/loki
-        - Name: tempo-config
-          Host:
-            SourcePath: /etc/tempo
-        - Name: prometheus-config
-          Host:
-            SourcePath: /etc/prometheus
+          Environment:
+            - Name: PROMETHEUS_YAML
+              Value: !Sub |
+                ${!file devops/configurationFiles/prometheus.yaml}
+          Command: ["/bin/sh", "-c", "echo \"$PROMETHEUS_YAML\" > /etc/prometheus/prometheus.yaml && /run.sh"]
 
   GrafanaService:
     Type: AWS::ECS::Service
