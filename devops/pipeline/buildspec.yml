@@ -25,7 +25,7 @@ phases:
       - echo 'Copiando arquivos de configuração e dashboards para o diretório de destino...'
       - mkdir -p /etc/grafana/provisioning/dashboards
       - cp devops/configurationFiles/grafana.ini /etc/grafana/grafana.ini
-      - cp devops/configurationFiles/dashboards/* /etc/grafana/provisioning/dashboards/
+      - cp devops/configurationFiles/dashboards/*.json /etc/grafana/provisioning/dashboards/
       - mkdir -p /etc/tempo
       - cp devops/configurationFiles/tempo.yaml /etc/tempo/tempo.yaml
       - mkdir -p /etc/loki
