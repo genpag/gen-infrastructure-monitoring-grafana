@@ -265,7 +265,7 @@ Resources:
           Command: ["/bin/sh", "-c", "cp /etc/loki-config/* /etc/loki/ && /run.sh"]
         - Name: tempo
           Image: !Ref TempoImage
-          Essential: false
+          Essential: true
           PortMappings:
             - ContainerPort: 3200
           LogConfiguration:
