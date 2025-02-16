@@ -31,7 +31,7 @@ phases:
       - mkdir -p /etc/tempo
       - cp devops/configurationFiles/tempo.yaml /etc/tempo/tempo.yaml
       - mkdir -p /etc/loki
-      - cp devops/configurationFiles/loki.yaml /etc/loki/loki.yaml
+      - cp devops/configurationFiles/loki.yaml /etc/loki/config.yaml
       - mkdir -p /etc/prometheus
       - cp devops/configurationFiles/prometheus.yaml /etc/prometheus/prometheus.yaml
       - echo 'Validando o template CloudFormation'

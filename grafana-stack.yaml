@@ -270,7 +270,7 @@ Resources:
             - Name: LOKI_YAML
               Value: !Sub |
                 ${!file devops/configurationFiles/loki.yaml}
-          Command: ["/bin/sh", "-c", "echo \"$LOKI_YAML\" > /etc/loki/loki.yaml && /run.sh"]
+          Command: ["/bin/sh", "-c", "echo \"$LOKI_YAML\" > /etc/loki/config.yaml && /run.sh"]
         - Name: tempo
           Image: !Ref TempoImage
           Essential: false
