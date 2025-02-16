@@ -302,7 +302,7 @@ Resources:
             - Name: PROMETHEUS_YAML
               Value: !Sub |
                 ${!file devops/configurationFiles/prometheus.yaml}
-          Command: ["/bin/sh", "-c", "echo \"$PROMETHEUS_YAML\" > /etc/prometheus/prometheus.yaml && /run.sh"]
+          Command: ["--config.file=/etc/prometheus/prometheus.yaml"]
 
   GrafanaService:
     Type: AWS::ECS::Service
