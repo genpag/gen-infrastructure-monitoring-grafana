@@ -250,9 +250,12 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: grafana
-          MountPoints:
-            - SourceVolume: grafana-config
-              ContainerPath: /etc/grafana
+          Environment:
+            - Name: S3_BUCKET
+              Value: grafanadev-configs
+            - Name: GRAFANA_INI_PATH
+              Value: grafana.ini
+          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$GRAFANA_INI_PATH /etc/grafana/grafana.ini && /run.sh"]
         - Name: loki
           Image: !Ref LokiImage
           Essential: false
@@ -264,9 +267,12 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: loki
-          MountPoints:
-            - SourceVolume: loki-config
-              ContainerPath: /etc/loki
+          Environment:
+            - Name: S3_BUCKET
+              Value: grafanadev-configs
+            - Name: LOKI_YAML_PATH
+              Value: loki.yaml
+          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$LOKI_YAML_PATH /etc/loki/config.yaml && /run.sh"]
         - Name: tempo
           Image: !Ref TempoImage
           Essential: false
@@ -278,9 +284,12 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: tempo
-          MountPoints:
-            - SourceVolume: tempo-config
-              ContainerPath: /etc/tempo
+          Environment:
+            - Name: S3_BUCKET
+              Value: grafanadev-configs
+            - Name: TEMPO_YAML_PATH
+              Value: tempo.yaml
+          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$TEMPO_YAML_PATH /etc/tempo/tempo.yaml && /run.sh"]
         - Name: prometheus
           Image: !Ref PrometheusImage
           Essential: true
@@ -292,9 +301,12 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: prometheus
-          MountPoints:
-            - SourceVolume: prometheus-config
-              ContainerPath: /etc/prometheus
+          Environment:
+            - Name: S3_BUCKET
+              Value: grafanadev-configs
+            - Name: PROMETHEUS_YAML_PATH
+              Value: prometheus.yaml
+          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$PROMETHEUS_YAML_PATH /etc/prometheus/prometheus.yaml && /run.sh"]
       Volumes:
         - Name: grafana-config
           Host:
