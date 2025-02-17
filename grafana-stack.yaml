@@ -307,19 +307,6 @@ Resources:
             - Name: PROMETHEUS_YAML_PATH
               Value: prometheus.yaml
           Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$PROMETHEUS_YAML_PATH /etc/prometheus/prometheus.yaml && /run.sh"]
-      Volumes:
-        - Name: grafana-config
-          Host:
-            SourcePath: /path/to/devops/configurationFiles/grafana.ini
-        - Name: loki-config
-          Host:
-            SourcePath: /path/to/devops/configurationFiles/loki.yaml
-        - Name: tempo-config
-          Host:
-            SourcePath: /path/to/devops/configurationFiles/tempo.yaml
-        - Name: prometheus-config
-          Host:
-            SourcePath: /path/to/devops/configurationFiles/prometheus.yaml
 
   GrafanaService:
     Type: AWS::ECS::Service
