@@ -257,7 +257,7 @@ Resources:
           Command: ["/bin/sh", "-c", "echo \"$GRAFANA_INI\" > /etc/grafana/grafana.ini && /run.sh"]
         - Name: loki
           Image: !Ref LokiImage
-          Essential: true
+          Essential: false
           PortMappings:
             - ContainerPort: 3100
           LogConfiguration:
