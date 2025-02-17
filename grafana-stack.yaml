@@ -250,11 +250,9 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: grafana
-          Environment:
-            - Name: GRAFANA_INI
-              Value: !Sub |
-                ${!file devops/configurationFiles/grafana.ini}
-          Command: ["/bin/sh", "-c", "echo \"$GRAFANA_INI\" > /etc/grafana/grafana.ini && /run.sh"]
+          MountPoints:
+            - SourceVolume: grafana-config
+              ContainerPath: /etc/grafana
         - Name: loki
           Image: !Ref LokiImage
           Essential: false
@@ -266,11 +264,9 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: loki
-          Environment:
-            - Name: LOKI_YAML
-              Value: !Sub |
-                ${!file devops/configurationFiles/loki.yaml}
-          Command: ["/bin/sh", "-c", "echo \"$LOKI_YAML\" > /etc/loki/config.yaml && /run.sh"]
+          MountPoints:
+            - SourceVolume: loki-config
+              ContainerPath: /etc/loki
         - Name: tempo
           Image: !Ref TempoImage
           Essential: false
@@ -282,11 +278,9 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: tempo
-          Environment:
-            - Name: TEMPO_YAML
-              Value: !Sub |
-                ${!file devops/configurationFiles/tempo.yaml}
-          Command: ["/bin/sh", "-c", "echo \"$TEMPO_YAML\" > /etc/tempo/tempo.yaml && /run.sh"]
+          MountPoints:
+            - SourceVolume: tempo-config
+              ContainerPath: /etc/tempo
         - Name: prometheus
           Image: !Ref PrometheusImage
           Essential: true
@@ -298,11 +292,22 @@ Resources:
               awslogs-group: /ecs/monitoring
               awslogs-region: us-east-2
               awslogs-stream-prefix: prometheus
-          Environment:
-            - Name: PROMETHEUS_YAML
-              Value: !Sub |
-                ${!file devops/configurationFiles/prometheus.yaml}
-          Command: ["--config.file=/etc/prometheus/prometheus.yaml"]
+          MountPoints:
+            - SourceVolume: prometheus-config
+              ContainerPath: /etc/prometheus
+      Volumes:
+        - Name: grafana-config
+          Host:
+            SourcePath: /path/to/devops/configurationFiles/grafana.ini
+        - Name: loki-config
+          Host:
+            SourcePath: /path/to/devops/configurationFiles/loki.yaml
+        - Name: tempo-config
+          Host:
+            SourcePath: /path/to/devops/configurationFiles/tempo.yaml
+        - Name: prometheus-config
+          Host:
+            SourcePath: /path/to/devops/configurationFiles/prometheus.yaml
 
   GrafanaService:
     Type: AWS::ECS::Service
