@@ -32,8 +32,16 @@ phases:
       - cp devops/configurationFiles/tempo.yaml /etc/tempo/tempo.yaml
       - mkdir -p /etc/loki
       - cp devops/configurationFiles/loki.yaml /etc/loki/config.yaml
+      - echo 'Listing contents of /etc/loki directory:'
+      - ls -l /etc/loki
+      - echo 'Checking if config.yaml file exists:'
+      - if [ -f /etc/loki/config.yaml ]; then echo "config.yaml exists"; else echo "config.yaml does not exist"; fi
       - mkdir -p /etc/prometheus
       - cp devops/configurationFiles/prometheus.yaml /etc/prometheus/prometheus.yaml
+      - echo 'Listing contents of /etc/prometheus directory:'
+      - ls -l /etc/prometheus
+      - echo 'Checking if prometheus.yaml file exists:'
+      - if [ -f /etc/prometheus/prometheus.yaml ]; then echo "prometheus.yaml exists"; else echo "prometheus.yaml does not exist"; fi
       - echo 'Validando o template CloudFormation'
       - aws cloudformation validate-template --template-body file://grafana-stack.yaml
       - echo 'Lendo parâmetros do arquivo parameters.json'
