@@ -57,6 +57,7 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
   GrafanaLogGroup:
     Type: AWS::Logs::LogGroup
@@ -79,9 +80,7 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+        - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
   GrafanaLoadBalancer:
@@ -106,9 +105,7 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+        - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
   GrafanaTargetGroup:
