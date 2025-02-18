@@ -27,10 +27,10 @@ phases:
     commands:
       - echo 'Iniciando o build...'
       - echo 'Building Docker images...'
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-latest ./repos/gen-infrastructure-monitoring-grafana/devops/Dockerfiles/Tempo
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-latest ./repos/gen-infrastructure-monitoring-grafana/devops/Dockerfiles/Prometheus
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:loki-latest ./repos/gen-infrastructure-monitoring-grafana/devops/Dockerfiles/Loki
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:grafana-latest ./repos/gen-infrastructure-monitoring-grafana/devops/Dockerfiles/Grafana
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-latest ./devops/Dockerfiles/Tempo
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-latest ./devops/Dockerfiles/Prometheus
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:loki-latest ./devops/Dockerfiles/Loki
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:grafana-latest ./devops/Dockerfiles/Grafana
       - echo 'Pushing Docker images to ECR...'
       - docker push 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-latest
       - docker push 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-latest
