@@ -13,7 +13,7 @@ Parameters:
     Description: Lista de IDs das Subnets para o servico ECS
   GrafanaImage:
     Type: String
-    Default: grafana/grafana:latest
+    Default: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:grafana-custom
     Description: Imagem Docker do Grafana
   Cpu:
     Type: Number
@@ -26,15 +26,15 @@ Parameters:
     Description: Numero desejado de instancias da task
   TempoImage:
     Type: String
-    Default: grafana/tempo:latest
+    Default: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-custom
     Description: Imagem Docker do Tempo
   LokiImage:
     Type: String
-    Default: grafana/loki:latest
+    Default: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:loki-custom
     Description: Imagem Docker do Loki
   PrometheusImage:
     Type: String
-    Default: prom/prometheus:latest
+    Default: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-custom
     Description: Imagem Docker do Prometheus
   DomainName:
     Type: String
@@ -74,6 +74,15 @@ Resources:
           FromPort: 3000
           ToPort: 3000
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
 
   GrafanaLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -92,6 +101,11 @@ Resources:
       GroupDescription: Security Group para o ALB do Grafana
       VpcId: !Ref VpcId
       SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
@@ -240,7 +254,7 @@ Resources:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       ContainerDefinitions:
         - Name: grafana
-          Image: !Ref GrafanaImage
+          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:grafana-custom
           Essential: true
           PortMappings:
             - ContainerPort: 3000
@@ -255,9 +269,8 @@ Resources:
               Value: grafanadev-configs
             - Name: GRAFANA_INI_PATH
               Value: grafana.ini
-          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$GRAFANA_INI_PATH /etc/grafana/grafana.ini && /run.sh"]
         - Name: loki
-          Image: !Ref LokiImage
+          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:loki-custom
           Essential: false
           PortMappings:
             - ContainerPort: 3100
@@ -272,9 +285,8 @@ Resources:
               Value: grafanadev-configs
             - Name: LOKI_YAML_PATH
               Value: loki.yaml
-          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$LOKI_YAML_PATH /etc/loki/config.yaml && /run.sh"]
         - Name: tempo
-          Image: !Ref TempoImage
+          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-custom
           Essential: false
           PortMappings:
             - ContainerPort: 3200
@@ -289,9 +301,8 @@ Resources:
               Value: grafanadev-configs
             - Name: TEMPO_YAML_PATH
               Value: tempo.yaml
-          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$TEMPO_YAML_PATH /etc/tempo/tempo.yaml && /run.sh"]
         - Name: prometheus
-          Image: !Ref PrometheusImage
+          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-custom
           Essential: true
           PortMappings:
             - ContainerPort: 9090
@@ -306,7 +317,6 @@ Resources:
               Value: grafanadev-configs
             - Name: PROMETHEUS_YAML_PATH
               Value: prometheus.yaml
-          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$PROMETHEUS_YAML_PATH /etc/prometheus/prometheus.yaml && prometheus --config.file=/etc/prometheus/prometheus.yaml"]
 
   GrafanaService:
     Type: AWS::ECS::Service
