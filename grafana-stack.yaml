@@ -314,6 +314,7 @@ Resources:
               Value: grafanadev-configs
             - Name: PROMETHEUS_YAML_PATH
               Value: prometheus.yaml
+          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$PROMETHEUS_YAML_PATH /etc/prometheus/prometheus.yaml && prometheus --config.file=/etc/prometheus/prometheus.yaml"]
 
   GrafanaService:
     Type: AWS::ECS::Service
