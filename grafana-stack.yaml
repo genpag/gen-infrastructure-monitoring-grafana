@@ -300,7 +300,7 @@ Resources:
               Value: tempo.yaml
         - Name: prometheus
           Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-custom
-          Essential: true
+          Essential: false
           PortMappings:
             - ContainerPort: 9090
           LogConfiguration:
