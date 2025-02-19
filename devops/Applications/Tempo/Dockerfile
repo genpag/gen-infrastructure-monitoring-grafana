@@ -1,11 +1,18 @@
 FROM ubuntu:20.04
 
+# Set environment variable to suppress interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
     bash \
     curl \
     python3 \
     python3-pip \
+    apt-transport-https \
+    software-properties-common \
+    netcat \
+    lsof \
     && rm -rf /var/lib/apt/lists/*
 
 # Install awscli
@@ -17,13 +24,14 @@ RUN curl -Lo /tmp/tempo_2.2.0_linux_amd64.deb https://github.com/grafana/tempo/r
     && dpkg -i /tmp/tempo_2.2.0_linux_amd64.deb \
     && rm /tmp/tempo_2.2.0_linux_amd64.deb
 
+# Copy the configuration files
+COPY tempo.yaml /etc/tempo/tempo.yaml
+
 # Copy the entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 
-# Debugging: List files and check permissions
-RUN ls -l /entrypoint.sh
-RUN cat /entrypoint.sh
-RUN ls -l /
+# Expose the necessary ports
+EXPOSE 3100 3200 9095
 
 # Set the entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

@@ -251,7 +251,7 @@ Resources:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       ContainerDefinitions:
         - Name: grafana
-          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:grafana-custom
+          Image: !Ref GrafanaImage
           Essential: true
           PortMappings:
             - ContainerPort: 3000
@@ -267,7 +267,7 @@ Resources:
             - Name: GRAFANA_INI_PATH
               Value: grafana.ini
         - Name: loki
-          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:loki-custom
+          Image: !Ref LokiImage
           Essential: false
           PortMappings:
             - ContainerPort: 3100
@@ -283,7 +283,7 @@ Resources:
             - Name: LOKI_YAML_PATH
               Value: loki.yaml
         - Name: tempo
-          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-custom
+          Image: !Ref TempoImage
           Essential: false
           PortMappings:
             - ContainerPort: 3200
@@ -299,7 +299,7 @@ Resources:
             - Name: TEMPO_YAML_PATH
               Value: tempo.yaml
         - Name: prometheus
-          Image: 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-custom
+          Image: !Ref PrometheusImage
           Essential: false
           PortMappings:
             - ContainerPort: 9090
@@ -314,7 +314,6 @@ Resources:
               Value: grafanadev-configs
             - Name: PROMETHEUS_YAML_PATH
               Value: prometheus.yaml
-          Command: ["/bin/sh", "-c", "aws s3 cp s3://$S3_BUCKET/$PROMETHEUS_YAML_PATH /etc/prometheus/prometheus.yaml && prometheus --config.file=/etc/prometheus/prometheus.yaml"]
 
   GrafanaService:
     Type: AWS::ECS::Service
@@ -354,7 +353,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: !Ref HostedZoneId
-      Name: monitoring.dev.gen.com.br
+      Name: !Ref DomainName
       Type: A
       AliasTarget:
         HostedZoneId: !GetAtt GrafanaLoadBalancer.CanonicalHostedZoneID
@@ -363,4 +362,4 @@ Resources:
 Outputs:
   GrafanaURL:
     Description: URL do Grafana acessível via Route 53
-    Value: monitoring.dev.gen.com.br
+    Value: !Ref DomainName

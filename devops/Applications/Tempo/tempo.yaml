@@ -14,6 +14,8 @@ distributor:
       protocols:
         grpc:
         http:
+    zipkin:
+      endpoint: 0.0.0.0:9411
 
 ingester:
   lifecycler:
@@ -21,9 +23,6 @@ ingester:
       kvstore:
         store: inmemory
       replication_factor: 1
-  wal:
-    enabled: true
-    dir: /var/tempo/wal
 
 compactor:
   compaction:
@@ -37,8 +36,12 @@ storage:
 
 querier:
   frontend_worker:
-    frontend_address: frontend:9095
-  query_ingesters_within: 2h
+    frontend_address: 127.0.0.1:9095
 
-frontend:
-  address: 0.0.0.0:9095
+query_frontend:
+  max_batch_size: 1000000
+  max_group_size: 1000000
+
+memberlist:
+  join_members:
+    - 127.0.0.1

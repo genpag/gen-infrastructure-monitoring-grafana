@@ -7,10 +7,10 @@ This repository contains the infrastructure code to deploy Grafana, Tempo, Loki,
 - `grafana-stack.yaml`: CloudFormation template to deploy the infrastructure.
 - `devops/pipeline/buildspec.yml`: Build specification for the CI/CD pipeline.
 - `devops/variables/parameters.json`: Parameters for the CloudFormation stack.
-- `devops/configurationFiles/grafana.ini`: Configuration file for Grafana.
-- `devops/configurationFiles/tempo.yaml`: Configuration file for Tempo.
-- `devops/configurationFiles/loki.yaml`: Configuration file for Loki.
-- `devops/configurationFiles/prometheus.yaml`: Configuration file for Prometheus.
+- `devops/Applications/Grafana/grafana.ini`: Configuration file for Grafana.
+- `devops/Applications/Tempo/tempo.yaml`: Configuration file for Tempo.
+- `devops/Applications/Loki/loki.yaml`: Configuration file for Loki.
+- `devops/Applications/Prometheus/prometheus.yaml`: Configuration file for Prometheus.
 
 ## Deployment
 
@@ -20,7 +20,7 @@ This repository contains the infrastructure code to deploy Grafana, Tempo, Loki,
 
 ## Configuration
 
-You can update the configuration files for Grafana, Tempo, Loki, and Prometheus in the `devops/configurationFiles` directory. The CI/CD pipeline will copy these files to the appropriate locations, ensuring that the containers start with the correct configuration.
+You can update the configuration files for Grafana, Tempo, Loki, and Prometheus in the `devops/Applications` directory. The CI/CD pipeline will copy these files to the appropriate locations, ensuring that the containers start with the correct configuration.
 
 ## Monitoring
 

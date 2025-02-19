@@ -18,8 +18,8 @@ phases:
         ADMIN_USER=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_USER')
         ADMIN_PASSWORD=$(echo $SECRETS | jq -r '.GRAFANA_ADMIN_PASSWD')
       - echo 'Substituindo credenciais no grafana.ini'
-      - sed -i "s/ADMINUSER/${ADMIN_USER}/g" devops/configurationFiles/grafana.ini
-      - sed -i "s/ADMINPASSWD/${ADMIN_PASSWORD}/g" devops/configurationFiles/grafana.ini
+      - sed -i "s/ADMINUSER/${ADMIN_USER}/g" devops/Applications/Grafana/grafana.ini
+      - sed -i "s/ADMINPASSWD/${ADMIN_PASSWORD}/g" devops/Applications/Grafana/grafana.ini
       - echo 'Logging in to Amazon ECR...'
       - $(aws ecr get-login --no-include-email --region us-east-2)
 
@@ -27,10 +27,10 @@ phases:
     commands:
       - echo 'Iniciando o build...'
       - echo 'Building Docker images...'
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-latest ./devops/Dockerfiles/Tempo
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-latest ./devops/Dockerfiles/Prometheus
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:loki-latest ./devops/Dockerfiles/Loki
-      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:grafana-latest ./devops/Dockerfiles/Grafana
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-latest ./devops/Applications/Tempo
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-latest ./devops/Applications/Prometheus
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:loki-latest ./devops/Applications/Loki
+      - docker build -t 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:grafana-latest ./devops/Applications/Grafana
       - echo 'Pushing Docker images to ECR...'
       - docker push 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:tempo-latest
       - docker push 975050172141.dkr.ecr.us-east-2.amazonaws.com/monitoring:prometheus-latest
@@ -40,11 +40,6 @@ phases:
   post_build:
     commands:
       - echo 'Iniciando a fase de post_build...'
-      - echo 'Copiando arquivos de configuração para o bucket S3...'
-      - aws s3 cp devops/configurationFiles/grafana.ini s3://grafanadev-configs/grafana.ini
-      - aws s3 cp devops/configurationFiles/loki.yaml s3://grafanadev-configs/loki.yaml
-      - aws s3 cp devops/configurationFiles/tempo.yaml s3://grafanadev-configs/tempo.yaml
-      - aws s3 cp devops/configurationFiles/prometheus.yaml s3://grafanadev-configs/prometheus.yaml
       - echo 'Validando o template CloudFormation'
       - aws cloudformation validate-template --template-body file://grafana-stack.yaml
       - echo 'Lendo parâmetros do arquivo parameters.json'
@@ -64,7 +59,7 @@ artifacts:
   files:
     - grafana-stack.yaml
     - devops/variables/parameters.json
-    - devops/configurationFiles/grafana.ini
-    - devops/configurationFiles/tempo.yaml
-    - devops/configurationFiles/loki.yaml
-    - devops/configurationFiles/prometheus.yaml
+    - devops/Applications/Grafana/grafana.ini
+    - devops/Applications/Tempo/tempo.yaml
+    - devops/Applications/Loki/loki.yaml
+    - devops/Applications/Prometheus/prometheus.yaml
